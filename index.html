@@ -172,9 +172,9 @@ const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><pat
 // ===== 관리자 전용 메뉴 =====
 const TT=()=>U.admin||U.mgr?[...T,'관리']:T;
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
-function vAdm(){const m=S.adm||'미제출';
-  $('#v').innerHTML=`<div class="seg adm">${['미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['선생님']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
-  ({미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,선생님:aTch}[m])()}
+function vAdm(){const m=S.adm||'보고서미제출';
+  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
+  ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
   try{const r=await call('tchList');S.tl=r;
