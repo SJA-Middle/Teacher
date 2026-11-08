@@ -195,7 +195,7 @@ function ask(i){sendTxt(reqMsg([S.mi[i]]))}
 function askAll(){sendTxt(reqMsg(S.mi))}
 async function aLong(){$('#a').innerHTML='<div id="l">불러오는 중…</div>';
   run(async()=>{const a=await call('care',{min:4,bu:'전체'});
-    $('#l').innerHTML=(a.length?`<p><b>${a.length}명</b> <small>· 4주(1개월) 이상 연속 결석</small></p>`+a.map(o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(o.last)}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`).join(''):'<p>1개월 이상 연속 결석한 학생이 없습니다.</p>')})}
+    $('#l').innerHTML=(a.length?`<p><b>${a.length}명</b> <small>· 4주(1개월) 이상 연속 결석</small></p>`+a.map(o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(md(o.last))}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`).join(''):'<p>1개월 이상 연속 결석한 학생이 없습니다.</p>')})}
 function sumText(r){let A=0,B=0;r.list.filter(x=>x.done).forEach(x=>{A+=x.a;B+=x.b});const n=A+B,no=r.list.filter(x=>!x.done).map(x=>x.cls);
   let s=`■ ${lbl(r.date)} 주일 반모임 요약\n출석 ${A}명 · 결석 ${B}명`+(n?` (출석률 ${Math.round(A/n*100)}%)`:'')+`\n미제출: ${no.join(', ')||'없음'}\n`;
   let bu=null;r.list.filter(x=>x.done).forEach(x=>{if(x.bu!==bu){bu=x.bu;s+=`\n[${bu||'기타'}]\n`}
@@ -290,13 +290,14 @@ async function loadAtt(){S.cls=$('#c').value;D=$('#d').value;{const e=$('#d');$(
   S.r=r;S.fresh=true;
   if(keep){S.st=keep.st;S.rs=keep.rs;r.prayer=keep.pr;r.note=keep.nt}else{S.st=Object.assign({},r.status);S.rs=Object.assign({},r.reasons)}
   draw()}
-const md=d=>(+d.slice(5,7))+'/'+(+d.slice(8,10));
+const md=d=>{if(!d||d==='-')return d||'';const y=+d.slice(0,4),c=new Date().getFullYear();return (y&&y!==c?String(y).slice(2)+'년 ':'')+(+d.slice(5,7))+'/'+(+d.slice(8,10));};
+const lg=n=>{const m=Math.floor(n*12/52),y=Math.floor(m/12),r=m%12;return '결석 '+(y>=2?'2년 이상':y===1?(r?'1년 '+r+'개월':'1년'):m+'개월');};
 const em=s=>(s.leader?' <img class="lh" src="lead.png" alt="리더">':'')+(s.n>=52?' 🐑🐑':s.n>=26?' 🐑':'');
 const gr=s=>/성가반/.test(S.cls)&&s.grade?`<small class="gr g${String(s.grade).replace(/\D/g,'').slice(0,1)}">${esc(String(s.grade).replace(/학년$/,''))}학년</small>`:'';
 function allP(){S.touched=true;S.r.prayer=$('#pr').value;S.r.note=$('#nt').value;S.r.students.forEach(s=>{S.st[s.id]='출석'});draw()}
 function draw(){const r=S.r;if(/성가반/.test(S.cls))r.students.sort((a,b)=>String(a.grade).localeCompare(String(b.grade),'ko'));
   const na=r.students.filter(s=>S.st[s.id]=='출석').length,nb=r.students.filter(s=>S.st[s.id]=='결석').length,nc=r.students.length-na-nb;
-  $('#l').innerHTML=`<div class="sum"><span class="a"><b>${na}</b>출석</span><span class="b"><b>${nb}</b>결석</span><span class="c"><b>${nc}</b>미체크</span></div><button class="all" onclick="allP()">전원 출석으로 채우기</button>`+r.students.map(s=>`<div class="row"><b class="nm">${gr(s)}${esc(s.name)}${em(s)}${s.n>=12?'<small class="lg">결석 3개월 이상</small>':''}<small class="ls">${s.last?'마지막 출석 '+md(s.last):'출석 기록 없음'}</small></b><span class="seg">`+
+  $('#l').innerHTML=`<div class="sum"><span class="a"><b>${na}</b>출석</span><span class="b"><b>${nb}</b>결석</span><span class="c"><b>${nc}</b>미체크</span></div><button class="all" onclick="allP()">전원 출석으로 채우기</button>`+r.students.map(s=>`<div class="row"><b class="nm">${gr(s)}${esc(s.name)}${em(s)}${s.n>=13?'<small class="lg">'+lg(s.n)+'</small>':''}<small class="ls">${s.last?'마지막 출석 '+md(s.last):'출석 기록 없음'}</small></b><span class="seg">`+
    [['o','출석'],['x','결석']].map(([k,t])=>`<button class="${S.st[s.id]==t?k:''}" onclick="mark('${s.id}','${t}')">${t}</button>`).join('')+`</span>`+
    (S.st[s.id]=='결석'?`<input class="rs" list="rl" maxlength="100" placeholder="결석 사유 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${s.id}']=this.value">`:'')+`</div>`).join('')+
    `<p class="lgd"><span>🐑 6개월 이상 잃은양</span><span>🐑🐑 1년 이상 잃은양</span><span><img class="lh" src="lead.png" alt=""> 유스비카 리더</span></p><datalist id="rl"><option value="몸이 아픔"><option value="가족 행사"><option value="학교 행사·시험"><option value="학원"><option value="여행"><option value="연락 안 됨"></datalist><textarea id="pr" rows="3" placeholder="기도제목" oninput="S.touched=true">${esc(r.prayer)}</textarea><textarea id="nt" rows="3" placeholder="반 특이사항" oninput="S.touched=true">${esc(r.note)}</textarea><button class="p" id="sv" onclick="run(save)"${S.fresh?'':' disabled'}>${S.fresh?'저장':'불러오는 중…'}</button>`}
