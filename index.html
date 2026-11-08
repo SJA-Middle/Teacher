@@ -142,6 +142,10 @@ nav button{position:relative}.bd{position:absolute;top:2px;left:calc(50% + 6px);
 .thx span:first-child{background:linear-gradient(180deg,#fff1c4,#ffc95c);-webkit-background-clip:text;background-clip:text;color:transparent}
 #login .lc{box-shadow:0 20px 50px #0b1a4f4d;border-top:3px solid #ffd36b}
 #login button.p,#login .lc .p{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px #2563eb55}
+.nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}
+.nfl{display:block;text-align:left;font-size:12px;font-weight:600;color:#64748b;margin:10px 2px 0}.nfc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.nfcam{display:block;text-align:center;box-sizing:border-box;cursor:pointer}
+.fam{border:1px solid #e2e8f0;border-radius:12px;padding:4px 8px;margin:6px 0}.fam input{margin:3px 0;padding:8px}input.unsure,select.unsure{background:#fff7d6;border-color:#f5c26b}
+#ab>div+div{margin-top:10px;padding-top:10px;border-top:1px dashed #f5c26b}
 </style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap&text=%EA%B7%B8%20%ED%95%9C%20%EC%82%AC%EB%9E%8C%EC%9D%84%20%ED%92%88%EC%96%B4%EC%A3%BC%EC%8B%A0%EC%84%A0%EC%83%9D%EB%8B%98%EC%9D%84%20%EC%B6%95%EB%B3%B5%ED%95%A9%EB%8B%88%EB%8B%A4%21%EC%98%81%ED%98%BC"></head><body>
 <div id="busy"></div>
 <div id="toast"></div>
@@ -170,7 +174,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.className='on';clearTime
 const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg>','출석통계':'<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>','보고서':'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>','심방일지':'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>','연락처':'<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>'};
 
 // ===== 관리자 전용 메뉴 =====
-const TT=()=>U.admin||U.mgr?[...T,'관리']:T;
+const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin||U.mgr)t.push('관리');return t};
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){const m=S.adm||'보고서미제출';
   $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
@@ -268,12 +272,94 @@ async function setPin(){const a=$('#np').value.trim(),b=$('#np2').value.trim(),e
 function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=U.name+(U.admin?' (관리자)':U.mgr?' (부장)':'');
   $('#tabs').innerHTML=TT().map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go('출석');
   if(U.admin||U.mgr)call('week',{date:D}).then(r=>{const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
-  if(U.admin)call('alerts',{}).then(a=>{if(!a||!a.length)return;$('#ab').innerHTML='<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>'}).catch(()=>{})}
-async function ackAl(){try{await call('alertAck',{});$('#ab').innerHTML=''}catch(e){toast('처리하지 못했습니다')}}
+  if(U.admin)call('alerts',{}).then(a=>{if(!a||!a.length)return;abSet('ab1','<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>')}).catch(()=>{});
+  if(U.classes.length)call('notices',{}).then(a=>{if(!a||!a.length)return;abSet('ab2','<b>🌱 우리 반에 새친구가 왔어요!</b><br>'+a.map(x=>esc(x.name)+' <small>'+esc(x.cls)+(x.school?' · '+esc(x.school):'')+(x.grade?' '+esc(x.grade):'')+'</small>').join('<br>')+'<br><small>새친구 교육을 마치고 반에 배정되었어요. 따뜻하게 맞아 주세요 🙏</small><br><button onclick="ackNf()">확인했어요</button>')}).catch(()=>{})}
+async function ackAl(){try{await call('alertAck',{});abSet('ab1','')}catch(e){toast('처리하지 못했습니다')}}
 function logout(){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
   try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
-function go(t){tab=t;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,관리:vAdm}[t])}
+function go(t){tab=t;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,새친구:vNf,관리:vAdm}[t])}
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
+
+// ===== 새친구: 등록카드 · 교육 출석 · 수료 · 반배정 (권한 있는 선생님에게만 탭이 보임) =====
+ic['새친구']='<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg>';
+const NFW=3;   // 새친구 교육 주수
+const dots=n=>'●'.repeat(Math.min(n,NFW))+'○'.repeat(Math.max(0,NFW-n));
+const nfBu=()=>$('#nb')?$('#nb').value:U.nf[0];
+function vNf(){const m=S.nfm||'명단';
+  $('#v').innerHTML=`<div class="seg adm">${['명단','교육출석','등록카드'].map(k=>`<button class="${k==m?'sel':''}" onclick="S.nfm='${k}';S.nfe=null;vNf()">${k}</button>`).join('')}</div>${U.nf.length>1&&m!='등록카드'?`<select id="nb">${opts(U.nf)}</select>`:''}<div id="a"></div>`;
+  if($('#nb')){if(S.nfb&&U.nf.includes(S.nfb))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
+  run({명단:nfList,교육출석:nfAtt,등록카드:()=>nfForm(S.nfe)}[m])}
+async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
+  const r=await call('nfList'),bu=nfBu(),L=r.list.filter(o=>o.bu==bu),cnt=k=>L.filter(o=>o.st==k).length;S.nl=L;
+  a.innerHTML=`<div class="sum"><span class="a"><b>${cnt('교육중')}</b>교육 중</span><span><b style="color:#2563eb">${cnt('수료')}</b>수료</span><span class="c"><b>${cnt('배정완료')}</b>배정 완료</span></div>`+
+   `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):'<p>등록된 새친구가 없습니다.</p>')}
+function nfCard(o,i){const cs=U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
+  return `<div class="card"><b>${esc(o.name)}</b> <small>${esc(o.school||'')} ${esc(o.grade||'')}</small> <span class="nst${sc}">${esc(o.st)}</span>`+
+   `<p><small>교육 ${dots(o.n)} ${o.n}/${NFW}주 · 등록 ${esc(md(o.reg))}${o.guide?' · 인도 '+esc(o.guide):''}</small></p>`+
+   (o.st=='배정완료'?`<p><small>✅ ${esc(o.cls)} 배정 (${esc(md(o.asg))})</small></p>`:'')+
+   `<p><button class="vb" onclick="S.nfm='등록카드';S.nfe='${esc(o.id)}';vNf()">카드 보기·수정</button>`+
+   (o.st=='교육중'&&o.n>=NFW?`<button class="vb" onclick="nfDone(${i})">수료 처리</button>`:'')+
+   (o.st=='수료'&&U.admin?`<button class="vb dl" onclick="nfUndo(${i})">수료 취소</button>`:'')+'</p>'+
+   (o.st=='수료'&&U.admin?`<div class="bar"><select id="ac${i}"><option value="">배정할 반 선택</option>${opts(cs)}</select><button class="vb" onclick="nfAsg(${i})">반배정</button></div>`:'')+
+   (o.st=='수료'&&!U.admin?'<p><small>관리자가 반을 배정하면 그 반 선생님께 알림이 갑니다.</small></p>':'')+'</div>'}
+function nfDone(i){const o=S.nl[i];if(!confirm(o.name+' 새친구를 수료 처리할까요?'))return;run(async()=>{await call('nfDone',{id:o.id});toast('수료 처리되었습니다');nfList()})}
+function nfUndo(i){const o=S.nl[i];if(!confirm(o.name+' 새친구의 수료를 취소할까요?'))return;run(async()=>{await call('nfUndo',{id:o.id});toast('취소되었습니다');nfList()})}
+function nfAsg(i){const o=S.nl[i],c=$('#ac'+i).value;if(!c){alert('배정할 반을 골라 주세요.');return}
+  if(!confirm(o.name+' 새친구를 '+c+' 반에 배정할까요?\n출석부 명단에 추가되고, 그 반 선생님께 알림이 갑니다.'))return;
+  run(async()=>{await call('nfAssign',{id:o.id,cls:c});toast(c+' 반에 배정되었습니다');nfList()})}
+
+async function nfAtt(){$('#a').innerHTML=`<div class="wk"><select id="d">${sunOpts(D)}</select></div><div id="l">불러오는 중…</div>`;
+  const ld=()=>run(async()=>{$('#l').innerHTML='불러오는 중…';const r=await call('nfAtt',{date:$('#d').value,bu:nfBu()});S.na=r.list;S.nst={};r.list.forEach(o=>S.nst[o.id]=o.st||'');nfAttDraw()});
+  $('#d').onchange=ld;ld()}
+function nfAttDraw(){const L=S.na;
+  $('#l').innerHTML=L.length?L.map(o=>`<div class="row"><b class="nm">${esc(o.name)}<small class="ls">교육 ${dots(o.n)} ${o.n}/${NFW}</small></b><span class="seg">${[['o','출석'],['x','결석']].map(([k,t])=>`<button class="${S.nst[o.id]==t?k:''}" onclick="S.nst['${esc(o.id)}']='${t}';nfAttDraw()">${t}</button>`).join('')}</span></div>`).join('')+
+   `<button class="p" onclick="run(nfAttSave)">저장</button><p><small>${NFW}주를 모두 출석하면 명단에서 수료 처리할 수 있어요.</small></p>`:'<p>교육 중인 새친구가 없습니다.</p>'}
+async function nfAttSave(){const st={};Object.keys(S.nst).forEach(k=>{if(S.nst[k])st[k]=S.nst[k]});if(!Object.keys(st).length)throw new Error('출석을 먼저 체크해 주세요.');
+  await call('nfAttSave',{date:$('#d').value,bu:nfBu(),status:st});toast('저장되었습니다');nfAtt()}
+
+// 등록카드: 글씨 칸(사진에서 자동으로 읽음)과 동그라미 칸(버튼으로 고름)
+const NFF=[['이름','이름'],['생년월일','생년월일','date'],['학년','학년','sel',['','1학년','2학년','3학년']],['학교','소속학교'],['학생연락처','본인 번호','tel'],['보호자연락처','부모 번호','tel'],['주소','주소'],['이전교회','이전교회'],['인도자','인도자 (이름·관계)']];
+const NFC=[['성별',['남','여']],['신앙생활',['방문','등록','기타']],['신급',['세례','입교','학습','유아세례','없음']],['부모연락동의',['예','아니오'],'부모님께 전화(문자)해도 괜찮나요?'],['예배참여',['예','아니오'],'예배에 꾸준히 참여할 생각이 있나요?'],['개인정보동의',['예','아니오'],'개인정보 수집 및 제공에 동의하나요?']];
+async function nfForm(id){$('#a').innerHTML='불러오는 중…';
+  const r=id?await call('nfGet',{id}):{fam:[],'등록신청일':nowIso()};S.nr=r;S.nph='';S.nun=[];S.ncv={};NFC.forEach(([k])=>S.ncv[k]=r[k]||'');nfDraw()}
+const nfFam=f=>`<div class="fam"><div class="bar"><input placeholder="관계" class="fr" value="${esc(f.rel||'')}"><input placeholder="이름" class="fn" value="${esc(f.name||'')}"></div><div class="bar"><input placeholder="생년월일" class="fb" value="${esc(f.birth||'')}"><input placeholder="전화번호" class="ft" type="tel" value="${esc(f.tel||'')}"></div><div class="bar"><input placeholder="직분" class="fo" value="${esc(f.role||'')}"><input placeholder="섬기는 교회" class="fc" value="${esc(f.church||'')}"></div></div>`;
+function nfDraw(){const r=S.nr,ro=r.st=='배정완료'&&!U.admin;
+  $('#a').innerHTML=`<div class="card"><b>${r.id?esc(r['이름'])+' 등록카드':'새 등록카드'}</b>${r.id?` <small>${esc(r.st)}${r.days&&r.days.length?' · 교육 '+r.days.length+'/'+NFW+'주':''}${r.photo?' · 사진 보관됨':''}</small>`:''}`+
+   (r.id?'':`<label class="p nfcam">📷 등록카드 사진으로 채우기<input type="file" accept="image/*" hidden onchange="nfPic(this)"></label><p class="nfl" id="ocm">카드를 평평한 곳에 두고, 카드 한 장만 화면에 가득 차게 위에서 찍어 주세요. 글씨를 읽어 칸을 채워 드려요.</p>`)+
+   (U.nf.length>1?`<label class="nfl">부서</label><select id="nf_bu">${opts(U.nf)}</select>`:'')+
+   NFF.map(([k,l,t,o])=>`<label class="nfl">${l}</label>`+(t=='sel'?`<select id="nf_${k}">${o.map(x=>`<option value="${x}"${(r[k]||'')==x?' selected':''}>${x||'선택'}</option>`).join('')}</select>`:`<input id="nf_${k}" ${t=='date'?'type="date"':t=='tel'?'type="tel" inputmode="tel"':''} value="${esc(r[k]||'')}">`)).join('')+
+   NFC.map(([k,o,l])=>`<label class="nfl">${l||k}</label><span class="seg nfc">${o.map(x=>`<button type="button" class="${S.ncv[k]==x?'o':''}" onclick="nfPick(this,'${k}','${x}')">${x}</button>`).join('')}</span>`).join('')+
+   `<label class="nfl">가족 관계</label><div id="fams">${(r.fam&&r.fam.length?r.fam:[{}]).map(nfFam).join('')}</div><button class="vb" onclick="nfFamAdd()">+ 가족 추가</button>`+
+   `<label class="nfl">등록신청일</label><input id="nf_등록신청일" type="date" value="${esc(r['등록신청일']||nowIso())}">`+
+   (ro?'<p><small>반배정이 끝난 카드는 관리자만 고칠 수 있어요.</small></p>':`<button class="p" onclick="run(nfSave)">저장</button>`)+
+   (r.id?`<p><button class="vb" onclick="S.nfm='명단';vNf()">← 목록으로</button>${U.admin||r.st=='교육중'?`<button class="vb dl" onclick="nfDel()">삭제</button>`:''}</p>`:'')+'</div>';
+  if($('#nf_bu'))$('#nf_bu').value=r.bu||S.nfb||U.nf[0]}
+function nfFamAdd(){if($('#fams').children.length<8)$('#fams').insertAdjacentHTML('beforeend',nfFam({}))}
+function nfPick(b,k,x){S.ncv[k]=S.ncv[k]==x?'':x;[...b.parentNode.children].forEach(e=>e.className=e.textContent==S.ncv[k]?'o':'')}
+// 사진을 긴 변 2000px 이하 JPEG로 줄여서 보냄 (전송 시간 단축)
+function shrink(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const k=Math.min(1,2000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.85))};
+  im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('사진을 열 수 없습니다. 다시 찍어 주세요.'))};im.src=u})}
+async function nfPic(inp){const f=inp.files&&inp.files[0];if(!f)return;const m=$('#ocm');m.textContent='사진을 읽는 중… (10초 정도 걸려요)';
+  try{const r=await call('nfOcr',{img:await shrink(f)});S.nph=r.photo||'';
+    if(r.f){const x=r.f,set=(k,v)=>{if(v&&$('#nf_'+k))$('#nf_'+k).value=v};
+      set('이름',x.name);set('생년월일',x.birth);set('학년',x.grade);set('학교',x.school);set('학생연락처',x.tel);set('보호자연락처',x.ptel);set('주소',x.addr);set('이전교회',x.prev);set('인도자',x.guide);
+      if(x.fam&&x.fam.length)$('#fams').innerHTML=x.fam.map(nfFam).join('');
+      S.nun=x.unsure||[];document.querySelectorAll('#a .unsure').forEach(e=>e.classList.remove('unsure'));S.nun.forEach(k=>{const e=$('#nf_'+k);if(e)e.classList.add('unsure')});
+      m.textContent='다 읽었어요! 카드와 비교해서 틀린 칸만 고쳐 주세요.'+(S.nun.length?' 노란 칸은 꼭 확인해 주세요.':'')+' 동그라미 친 항목(성별·신앙생활·신급·동의)은 버튼으로 골라 주세요.'}
+    else m.textContent=r.msg||'칸을 직접 채워 주세요.'}
+  catch(e){m.textContent=e.message}inp.value=''}
+async function nfSave(){const f={};NFF.forEach(([k])=>f[k]=$('#nf_'+k).value);NFC.forEach(([k])=>f[k]=S.ncv[k]||'');f['등록신청일']=$('#nf_등록신청일').value;
+  const fam=[...document.querySelectorAll('#fams .fam')].map(e=>({rel:e.querySelector('.fr').value,name:e.querySelector('.fn').value,birth:e.querySelector('.fb').value,tel:e.querySelector('.ft').value,role:e.querySelector('.fo').value,church:e.querySelector('.fc').value}));
+  if(!f['이름'].trim())throw new Error('이름을 입력해 주세요.');
+  if(f['개인정보동의']!=='예'&&!confirm('개인정보 수집·제공 동의가 "예"로 선택되지 않았어요. 그래도 저장할까요?'))return;
+  const bu=$('#nf_bu')?$('#nf_bu').value:(S.nr.bu||U.nf[0]);
+  await call('nfSave',{id:S.nr.id||'',bu,f,fam,photo:S.nph||''});toast('저장되었습니다');S.nfb=bu;S.nfm='명단';S.nfe=null;vNf()}
+function nfDel(){const r=S.nr;if(!confirm(r['이름']+' 새친구 카드를 삭제할까요?\n보관된 사진도 휴지통으로 이동합니다.'))return;
+  run(async()=>{await call('nfDel',{id:r.id});toast('삭제되었습니다');S.nfm='명단';S.nfe=null;vNf()})}
+// 배너 (장기결석 알림 · 새친구 배정 알림을 함께 표시)
+function abSet(id,h){let e=document.getElementById(id);if(!h){if(e)e.remove();return}if(!e){e=document.createElement('div');e.id=id;$('#ab').appendChild(e)}e.innerHTML=h}
+async function ackNf(){try{await call('noticeAck',{});abSet('ab2','')}catch(e){toast('처리하지 못했습니다')}}
 const multi=()=>U.bus.length>1;
 const busOpt=all=>(all?'<option>전체</option>':'')+opts(U.bus);
 const clsFor=bu=>U.classes.filter(c=>!bu||bu==='전체'||c.bu===bu).map(c=>c.name);
