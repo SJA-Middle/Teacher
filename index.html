@@ -196,7 +196,8 @@ function ask(i){sendTxt(reqMsg([S.mi[i]]))}
 function askAll(){sendTxt(reqMsg(S.mi))}
 async function aLong(){$('#a').innerHTML='<div id="l">불러오는 중…</div>';
   run(async()=>{const a=await call('care',{min:4,bu:'전체'});
-    $('#l').innerHTML=(a.length?`<p><b>${a.length}명</b> <small>· 4주(1개월) 이상 연속 결석</small></p>`+a.map(o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(md(o.last))}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`).join(''):'<p>1개월 이상 연속 결석한 학생이 없습니다.</p>')})}
+    const row=o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(md(o.last))}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`;const G=[['🐑🐑 1년 이상',o=>o.n>=52],['🐑 6개월 ~ 1년',o=>o.n>=26&&o.n<52],['4주 ~ 6개월',o=>o.n<26]];
+    $('#l').innerHTML=(a.length?`<p><b>${a.length}명</b> <small>· 4주(1개월) 이상 연속 결석</small></p>`+G.map(([t,f])=>{const g=a.filter(f);return g.length?`<p style="margin:14px 0 4px"><b>${t}</b> <small>· ${g.length}명</small></p>`+g.map(row).join(''):''}).join(''):'<p>1개월 이상 연속 결석한 학생이 없습니다.</p>')})}
 function sumText(r){let A=0,B=0;r.list.filter(x=>x.done).forEach(x=>{A+=x.a;B+=x.b});const n=A+B,no=r.list.filter(x=>!x.done).map(x=>x.cls);
   let s=`■ ${lbl(r.date)} 주일 반모임 요약\n출석 ${A}명 · 결석 ${B}명`+(n?` (출석률 ${Math.round(A/n*100)}%)`:'')+`\n미제출: ${no.join(', ')||'없음'}\n`;
   let bu=null;r.list.filter(x=>x.done).forEach(x=>{if(x.bu!==bu){bu=x.bu;s+=`\n[${bu||'기타'}]\n`}
