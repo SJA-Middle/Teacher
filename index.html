@@ -145,7 +145,7 @@ nav button{position:relative}.bd{position:absolute;top:2px;left:calc(50% + 6px);
 </style><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap&text=%EA%B7%B8%20%ED%95%9C%20%EC%82%AC%EB%9E%8C%EC%9D%84%20%ED%92%88%EC%96%B4%EC%A3%BC%EC%8B%A0%EC%84%A0%EC%83%9D%EB%8B%98%EC%9D%84%20%EC%B6%95%EB%B3%B5%ED%95%A9%EB%8B%88%EB%8B%A4%21"></head><body>
 <div id="busy"></div>
 <div id="toast"></div>
-<div id="login"><section class="hero"><div class="ph"></div><p class="vs"><span>하나님의 꿈을 꾸는</span><span>제자 되어 제자 삼는</span><span>살아내며 선교하는</span></p><p class="thx"><span>그 한 사람을 품어주신</span><span>선생님을 축복합니다!</span></p></section>
+<div id="login"><section class="hero"><div class="ph"></div><p class="vs"><span>하나님의 꿈을 꾸는</span><span>제자 되어 제자 삼는</span><span>살아내며 선교하는</span></p><p class="thx"><span>그 한 영혼을 품어주신</span><span>선생님을 축복합니다!</span></p></section>
 <main class="lc"><h2>반모임 보고서</h2>
 <input id="n" placeholder="이름" autocomplete="username"><input id="p" type="password" inputmode="numeric" placeholder="PIN" autocomplete="current-password">
 <button class="p" onclick="login()">로그인</button><div id="err" style="color:#d9473f"></div></main><footer class="foot"><img src="church.png" alt="새중앙교회"><img class="jd2" src="jungdeung.png" alt="드림공동체 중등부"></footer></div>
@@ -154,7 +154,7 @@ nav button{position:relative}.bd{position:absolute;top:2px;left:calc(50% + 6px);
 <script>
 // 구글 시트 데이터를 불러오는 Apps Script 웹 앱 주소 (배포를 새로 만들면 이 주소만 바꾸세요)
 const API='https://script.google.com/macros/s/AKfycbyN0ra0LHrEO0y-Z0LXrqGC4hjElVirv99gEzlcYtgMxGZ8HEh60h6CSjHvF7iFxrE/exec';
-const $=s=>document.querySelector(s),T=['출석','통계','보고서','심방일지','연락처'];
+const $=s=>document.querySelector(s),T=['출석','출석통계','보고서','심방일지','연락처'];
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const br=s=>esc(s).replace(/\n/g,'<br>');
 const tel=(n,l)=>n?`${l?'<small>'+l+')</small> ':''}<a href="tel:${esc(n)}">${esc(n)}</a>`:'';
@@ -167,14 +167,14 @@ const nowIso=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOSt
 // 최근 52주의 주일 목록 (이번 주 주일이 맨 위)
 function sunOpts(sel){const c=sun(nowIso());let h='';for(let i=0;i<52;i++){const d=addd(c,-7*i);h+=`<option value="${d}"${d===sel?' selected':''}>${lbl(d)} 주일${i==0?' · 이번 주':''}</option>`}return h}
 function toast(m){const t=$('#toast');t.textContent=m;t.className='on';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2200)}
-const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg>','통계':'<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>','보고서':'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>','심방일지':'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>','연락처':'<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>'};
+const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg>','출석통계':'<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>','보고서':'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>','심방일지':'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>','연락처':'<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>'};
 
 // ===== 관리자 전용 메뉴 =====
 const TT=()=>U.admin||U.mgr?[...T,'관리']:T;
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){const m=S.adm||'미제출';
-  $('#v').innerHTML=`<div class="seg adm">${['미제출','장기결석','요약','추이','심방기록'].concat(U.admin?['선생님']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
-  ({미제출:aMiss,장기결석:aLong,요약:aSum,추이:aTrend,심방기록:aVisit,선생님:aTch}[m])()}
+  $('#v').innerHTML=`<div class="seg adm">${['미제출','장기결석','요약','전체출석율','심방기록'].concat(U.admin?['선생님']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
+  ({미제출:aMiss,장기결석:aLong,요약:aSum,전체출석율:aTrend,심방기록:aVisit,선생님:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
   try{const r=await call('tchList');S.tl=r;
@@ -269,7 +269,7 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
   if(U.admin)call('alerts',{}).then(a=>{if(!a||!a.length)return;$('#ab').innerHTML='<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>'}).catch(()=>{})}
 async function ackAl(){try{await call('alertAck',{});$('#ab').innerHTML=''}catch(e){toast('처리하지 못했습니다')}}
 function logout(){try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
-function go(t){tab=t;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,관리:vAdm}[t])}
+function go(t){tab=t;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,관리:vAdm}[t])}
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
 const multi=()=>U.bus.length>1;
 const busOpt=all=>(all?'<option>전체</option>':'')+opts(U.bus);
@@ -327,7 +327,7 @@ async function vStat(){
   $('#m').onchange=$('#c').onchange=f;f()}
 async function vStu(id){
   const o=await call('student',{id});
-  $('#v').innerHTML=`<a class="back" href="#" onclick="go('통계');return false">← 통계로</a><div class="card"><b>${esc(o.name)}</b> <small>${esc(o.cls)} ${esc(o.grade)} ${esc(o.school)}</small>
+  $('#v').innerHTML=`<a class="back" href="#" onclick="go('출석통계');return false">← 출석통계로</a><div class="card"><b>${esc(o.name)}</b> <small>${esc(o.cls)} ${esc(o.grade)} ${esc(o.school)}</small>
    <p>출석 ${o.sum['출석']} · 결석 ${o.sum['결석']}</p></div>`+
    (o.recs.length?o.recs.map(r=>`<div class="row"><div>${esc(r.date)}</div><span class="tag ${cls[r.status]||''}">${esc(r.status)}</span>${r.reason?`<small style="flex-basis:100%;margin-top:4px">사유: ${esc(r.reason)}</small>`:''}</div>`).join(''):'<p>출석 기록이 없습니다.</p>')}
 
