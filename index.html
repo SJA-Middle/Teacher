@@ -242,7 +242,7 @@ async function call(a,p){
   busy(1);
   try{
     let r;
-    try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,p:P.p,a,params:p||{}})})}
+    try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,p:P.p,tk:P.tk,a,params:p||{}})})}
     catch(e){throw new Error('인터넷 연결을 확인해 주세요.')}
     let j;
     try{j=await r.json()}catch(e){throw new Error('서버 응답을 읽을 수 없습니다. 잠시 후 다시 시도해 주세요.')}
@@ -252,23 +252,26 @@ async function call(a,p){
   }finally{busy(-1)}
 }
 async function run(f){try{await f()}catch(e){alert(e.message||e)}}
-async function login(){P={n:$('#n').value,p:$('#p').value};
-  try{U=await call('login');if(U.must){showSetPin();return}try{localStorage.setItem('au',JSON.stringify(P));localStorage.setItem('uc',JSON.stringify(U))}catch(e){}}catch(e){$('#err').textContent=e.message;return}
-  enter()}
+// 로그인에 성공하면 기기에는 PIN 대신 서버가 준 열쇠(토큰)만 저장
+function keep(){const tk=U.tk;delete U.tk;if(tk)P={n:P.n,tk};try{localStorage.setItem('au',JSON.stringify(P));localStorage.setItem('uc',JSON.stringify(U))}catch(e){}}
+async function login(){P={n:$('#n').value.trim(),p:$('#p').value};
+  try{U=await call('login');if(U.must){showSetPin();return}keep()}catch(e){$('#err').textContent=e.message;return}
+  $('#p').value='';enter()}
 // 임시 PIN(000000)으로 처음 로그인하면 나만의 PIN을 정하게 함
 function showSetPin(){$('#login .lc').innerHTML=`<h2>나만의 PIN 정하기</h2><p class="sub">처음 오셨네요! 앞으로 쓸 PIN(숫자 4~6자리)을 정해 주세요.</p><input id="np" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN (숫자 4~6자리)" autocomplete="new-password"><input id="np2" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN 한 번 더" autocomplete="new-password"><button class="p" onclick="setPin()">PIN 저장하고 시작하기</button><div id="err" style="color:#d9473f"></div>`;$('#np').focus()}
 async function setPin(){const a=$('#np').value.trim(),b=$('#np2').value.trim(),e=$('#err');
   if(!/^\d{4,6}$/.test(a)){e.textContent='PIN은 숫자 4~6자리로 입력해 주세요.';return}
   if(a==='000000'){e.textContent='000000은 사용할 수 없습니다. 다른 숫자로 정해 주세요.';return}
   if(a!==b){e.textContent='두 번 입력한 PIN이 서로 달라요.';return}
-  try{await call('setPin',{pin:a});P.p=a;U=await call('login');try{localStorage.setItem('au',JSON.stringify(P));localStorage.setItem('uc',JSON.stringify(U))}catch(x){}}catch(x){e.textContent=x.message;return}
+  try{await call('setPin',{pin:a});P={n:P.n,p:a};U=await call('login');keep()}catch(x){e.textContent=x.message;return}
   toast('PIN이 저장되었습니다. 다음부터는 새 PIN으로 로그인하세요');enter()}
 function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=true;$('#app').hidden=false;$('#who').textContent=U.name+(U.admin?' (관리자)':U.mgr?' (부장)':'');
   $('#tabs').innerHTML=TT().map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go('출석');
   if(U.admin||U.mgr)call('week',{date:D}).then(r=>{const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
   if(U.admin)call('alerts',{}).then(a=>{if(!a||!a.length)return;$('#ab').innerHTML='<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>'}).catch(()=>{})}
 async function ackAl(){try{await call('alertAck',{});$('#ab').innerHTML=''}catch(e){toast('처리하지 못했습니다')}}
-function logout(){try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
+function logout(){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
+  try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
 function go(t){tab=t;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,관리:vAdm}[t])}
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
 const multi=()=>U.bus.length>1;
@@ -379,9 +382,9 @@ async function vPpl(){
 
 // 저장해 둔 로그인 정보가 있으면 서버 확인을 기다리지 않고 바로 화면을 띄움 (확인은 뒤에서 진행)
 function fast(s){let c=null;try{c=JSON.parse(localStorage.getItem('uc'))}catch(e){}
-  if(!c||!c.classes){login();return}
+  if(!c||!c.classes){if(s.p){$('#p').value=s.p;login()}else if(s.tk){P=s;call('login').then(u=>{U=u;keep();enter()}).catch(()=>{})}return}
   P=s;U=c;enter();
-  call('login').then(u=>{if(u.must){logout();return}U=u;try{localStorage.setItem('uc',JSON.stringify(u))}catch(e){}}).catch(e=>{if(/PIN/.test(e.message))logout()})}
-try{const s=JSON.parse(localStorage.getItem('au'));if(s){$('#n').value=s.n;$('#p').value=s.p;fast(s)}}catch(e){}
+  call('login').then(u=>{if(u.must){logout();return}U=u;keep()}).catch(e=>{if(/PIN/.test(e.message))logout()})}   // 예전 방식(PIN 저장)으로 로그인해 있던 기기는 여기서 자동으로 열쇠 방식으로 바뀜
+try{const s=JSON.parse(localStorage.getItem('au'));if(s){$('#n').value=s.n;fast(s)}}catch(e){}
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>
