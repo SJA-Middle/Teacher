@@ -290,15 +290,15 @@ const NFW=3;   // 새친구 교육 주수
 const dots=n=>'●'.repeat(Math.min(n,NFW))+'○'.repeat(Math.max(0,NFW-n));
 const nfBu=()=>$('#nb')?$('#nb').value:U.nf[0];
 function vNf(){const m=S.nfm||'명단';
-  $('#v').innerHTML=`<div class="seg adm">${['명단','교육출석','등록카드'].map(k=>`<button class="${k==m?'sel':''}" onclick="S.nfm='${k}';S.nfe=null;vNf()">${{명단:'새친구명단',교육출석:'출석체크',등록카드:'등록카드 작성'}[k]}</button>`).join('')}</div>${U.nf.length>1&&m!='등록카드'?`<select id="nb">${opts(U.nf)}</select>`:''}<div id="a"></div>`;
-  if($('#nb')){if(S.nfb&&U.nf.includes(S.nfb))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
+  $('#v').innerHTML=`<div class="seg adm">${['명단','교육출석','등록카드'].map(k=>`<button class="${k==m?'sel':''}" onclick="S.nfm='${k}';S.nfe=null;vNf()">${{명단:'새친구명단',교육출석:'출석체크',등록카드:'등록카드 작성'}[k]}</button>`).join('')}</div>${U.nf.length>1&&m!='등록카드'?`<select id="nb">${opts(m=='명단'?['전체',...U.nf]:U.nf)}</select>`:''}<div id="a"></div>`;
+  if($('#nb')){if(S.nfb&&(U.nf.includes(S.nfb)||(S.nfb=='전체'&&m=='명단')))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
   run({명단:nfList,교육출석:nfAtt,등록카드:()=>nfForm(S.nfe)}[m])}
 async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
-  const r=await call('nfList'),bu=nfBu(),L=r.list.filter(o=>o.bu==bu),cnt=k=>L.filter(o=>o.st==k).length;S.nl=L;
+  const r=await call('nfList'),bu=nfBu(),L=r.list.filter(o=>bu=='전체'||o.bu==bu),cnt=k=>L.filter(o=>o.st==k).length;S.nl=L;S.nall=bu=='전체';
   a.innerHTML=`<div class="sum"><span class="a"><b>${cnt('교육중')}</b>교육 중</span><span><b style="color:#2563eb">${cnt('수료')}</b>수료</span><span class="c"><b>${cnt('배정완료')}</b>배정 완료</span></div>`+
    `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):'<p>등록된 새친구가 없습니다.</p>')}
 function nfCard(o,i){const cs=U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
-  return `<div class="card"><b>${esc(o.name)}</b> <small>${esc(o.school||'')} ${esc(o.grade||'')}</small> <span class="nst${sc}">${esc(o.st)}</span>`+
+  return `<div class="card"><b>${esc(o.name)}</b> <small>${S.nall?esc(o.bu)+' · ':''}${esc(o.school||'')} ${esc(o.grade||'')}</small> <span class="nst${sc}">${esc(o.st)}</span>`+
    `<p><small>교육 ${dots(o.n)} ${o.n}/${NFW}주 · 등록 ${esc(md(o.reg))}${o.guide?' · 인도 '+esc(o.guide):''}</small></p>`+
    (o.st=='배정완료'?`<p><small>✅ ${esc(o.cls)} 배정 (${esc(md(o.asg))})</small></p>`:'')+
    `<p><button class="vb" onclick="S.nfm='등록카드';S.nfe='${esc(o.id)}';vNf()">카드 보기·수정</button>`+
@@ -337,7 +337,7 @@ function nfDraw(){const r=S.nr,ro=r.st=='배정완료'&&!U.admin;
    `<label class="nfl">등록신청일</label><input id="nf_등록신청일" type="date" value="${esc(r['등록신청일']||nowIso())}">`+
    (ro?'<p><small>반배정이 끝난 카드는 관리자만 고칠 수 있어요.</small></p>':`<button class="p" onclick="run(nfSave)">저장</button>`)+
    (r.id?`<p><button class="vb" onclick="S.nfm='명단';vNf()">← 목록으로</button>${U.admin||r.st=='교육중'?`<button class="vb dl" onclick="nfDel()">삭제</button>`:''}</p>`:'')+'</div>';
-  if($('#nf_bu'))$('#nf_bu').value=r.bu||S.nfb||U.nf[0]}
+  if($('#nf_bu'))$('#nf_bu').value=r.bu||(U.nf.includes(S.nfb)?S.nfb:U.nf[0])}
 function nfFamAdd(){if($('#fams').children.length<8)$('#fams').insertAdjacentHTML('beforeend',nfFam({}))}
 function nfPick(b,k,x){S.ncv[k]=S.ncv[k]==x?'':x;[...b.parentNode.children].forEach(e=>e.className=e.textContent==S.ncv[k]?'o':'')}
 // 사진을 긴 변 2000px 이하 JPEG로 줄여서 보냄 (전송 시간 단축)
