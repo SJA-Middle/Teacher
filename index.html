@@ -189,7 +189,7 @@ const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin
 ic['홈']='<svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){VG++;const m=S.adm||'보고서미제출';
-  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',장기결석:'장기<br>결석',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율',심방기록:'심방<br>기록',교사명단:'교사<br>명단'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
+  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율'].concat(U.admin?['심방기록','교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',장기결석:'장기<br>결석',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율',심방기록:'심방<br>기록',교사명단:'교사<br>명단'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
@@ -247,12 +247,17 @@ function aTrend(){$('#a').innerHTML=`<div class="flt"><select id="n"><option val
     const cmp=r.some(w=>w.gr)?`<div class="sum">${['1학년','2학년','3학년'].map(G=>{const v=avg(G);return`<span style="cursor:pointer${G==g?';outline:2px solid #2563eb':''}" onclick="$('#tg').value='${G}';$('#tg').onchange()"><b style="color:#2563eb">${v==null?'-':v+'%'}</b>${G} 평균</span>`}).join('')}</div>`:'';
     $('#l').innerHTML=cmp+chart(p)+`<table><tr><th>주일</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+p.slice().reverse().map(o=>`<tr><td>${md(o.d)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.r==null?'-':o.r+'%'}</td></tr>`).join('')+`</table>`};
   $('#n').onchange=()=>{S.trr=null;f()};$('#tb').onchange=$('#tg').onchange=f;S.trr=null;f()}
-function aVisit(){$('#a').innerHTML=`<div class="card"><b>심방 기록 남기기</b><input id="vq" placeholder="학생 이름 검색"><select id="vs"></select><input type="date" id="vd" value="${nowIso()}"><textarea id="vn" rows="3" placeholder="심방 내용 (방문·통화·만남 등)"></textarea><button class="p" onclick="run(visitSave)">저장</button></div><div id="l">불러오는 중…</div>`;
-  run(async()=>{const [pp,lg]=await Promise.all([S.pp||call('people',{bu:'전체'}),call('careLog',{})]);S.pp=pp;
-    const fl=()=>{const q=$('#vq').value.trim();$('#vs').innerHTML=pp.filter(o=>!q||String(o.name).includes(q)).slice(0,60).map(o=>`<option value="${esc(o.id)}">${esc(o.name)} · ${esc(o.cls)}</option>`).join('')||'<option value="">검색 결과 없음</option>'};
+// 관리자 전용 심방기록: 학생심방 + 교사심방 (교사는 'T:이름'으로 저장)
+function aVisit(){if(!U.admin){$('#a').innerHTML=emp('심방기록은 관리자만 볼 수 있습니다.','🔒');return}
+  $('#a').innerHTML=`<div class="card"><b>심방 기록 남기기</b><input id="vq" placeholder="학생·교사 이름 검색"><select id="vs"></select><input type="date" id="vd" value="${nowIso()}"><textarea id="vn" rows="3" placeholder="심방 내용 (방문·통화·만남 등)"></textarea><button class="p" onclick="run(visitSave)">저장</button></div><div id="l">불러오는 중…</div>`;
+  run(async()=>{const [pp,lg,tl]=await Promise.all([S.pp||call('people',{bu:'전체'}),call('careLog',{adm:1}),S.tl||call('tchList',{}).catch(()=>[])]);S.pp=pp;S.tl=tl;
+    const tn=[...new Set((tl||[]).map(o=>String(o.name||'').trim()).filter(Boolean))];
+    const fl=()=>{const q=$('#vq').value.trim(),cur=$('#vs').value,P=pp.filter(o=>!q||String(o.name).includes(q)).slice(0,60),Q=tn.filter(x=>!q||x.includes(q));
+      $('#vs').innerHTML='<option value="">심방할 학생·교사 선택</option>'+(P.length?`<optgroup label="학생">${P.map(o=>`<option value="${esc(o.id)}">${esc(o.name)} · ${esc(o.cls)}</option>`).join('')}</optgroup>`:'')+(Q.length?`<optgroup label="교사">${Q.map(x=>`<option value="T:${esc(x)}">${esc(x)} 선생님</option>`).join('')}</optgroup>`:'');
+      $('#vs').value=cur;if($('#vs').value!==cur)$('#vs').value=''};
     fl();$('#vq').oninput=fl;
-    $('#l').innerHTML=lg.length?lg.map(o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)} · ${lbl(o.date)}${o.by?' · '+esc(o.by):''}</small><br>${br(o.note)}</div></div>`).join(''):emp('아직 심방 기록이 없습니다.','💌')})}
-async function visitSave(){const id=$('#vs').value;if(!id)throw new Error('학생을 선택해 주세요.');
+    $('#l').innerHTML=lg.length?lg.map(o=>`<div class="row"><div><b>${esc(o.name)}${o.tch?' 선생님':''}</b>${o.tch?' <small class="gr" style="background:#7c3aed;color:#fff">교사심방</small>':''} <small>${o.tch?'':esc(o.cls)+' · '}${lbl(o.date)}${o.by?' · '+esc(o.by):''}</small><br>${br(o.note)}</div></div>`).join(''):emp('아직 심방 기록이 없습니다.','💌')})}
+async function visitSave(){const id=$('#vs').value;if(!id)throw new Error(tab=='관리'?'심방할 학생 또는 교사를 선택해 주세요.':'학생을 선택해 주세요.');
   await call('careAdd',{id,date:$('#vd').value,note:$('#vn').value});toast('심방일지가 저장되었습니다');if(tab=='심방일지')vCare();else aVisit()}
 async function visit(id){const n=prompt('심방 내용을 입력해 주세요');if(n==null||!n.trim())return;
   run(async()=>{await call('careAdd',{id,date:nowIso(),note:n});toast('심방 기록이 저장되었습니다');vCare()})}
@@ -344,7 +349,7 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
    hsec('#dc2626','🐑','장기결석 현황',`연속 결석 4주 이상 ${lsT}명`,
     `<table onclick="S.adm='장기결석';go('관리')" style="cursor:pointer"><tr><th>부</th><th>4주~6개월</th><th>6개월~1년</th><th>1년 이상</th><th>합계</th></tr>`+
     L.map(o=>{const l=o.ls||[0,0,0];return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td><b>${l[0]+l[1]+l[2]}</b></td></tr>`}).join('')+`</table>`+
-    `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이 주일 새로 장기결석이 된 학생 ${F.length}명</p>`+
+    `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이번 주 새로 장기결석이 된 학생 ${F.length}명</p>`+
     (F.length?`<div class="wks">${F.map(x=>`<span class="ok" style="background:${x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p class="hsp" style="color:#8a96ab">없습니다 🙏</p>'));
   const P=(r.reps||[]).filter(x=>x.prayer),N=(r.reps||[]).filter(x=>x.note),m=S.hm||'p',Q=m=='p'?P:N;
   h+=hsec('#7c3aed','🙏','반모임 보고서 모아보기','',
