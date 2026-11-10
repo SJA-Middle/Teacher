@@ -142,7 +142,7 @@ nav button{position:relative}.bd{position:absolute;top:2px;left:calc(50% + 6px);
 .thx span:first-child{background:linear-gradient(180deg,#fff1c4,#ffc95c);-webkit-background-clip:text;background-clip:text;color:transparent}
 #login .lc{box-shadow:0 20px 50px #0b1a4f4d;border-top:3px solid #ffd36b}
 #login button.p,#login .lc .p{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px #2563eb55}
-.nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}.nst.tc{margin-left:4px}.row .nfw{flex:0 0 100%;order:9;display:flex;align-items:center;gap:8px;font-size:13px;color:#55657f;margin-top:2px}.row .nfw select{flex:1;width:auto;min-width:0;margin:0;padding:8px 10px}.wks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.wks span{font-size:12px;padding:3px 8px;border-radius:9px;background:#eef2f9;color:#475569}.wks span.ok{background:#22c55e;color:#fff;font-weight:600}.wks span.sub{outline:2px dashed #fff;outline-offset:-4px}.sum.nfs span{cursor:pointer;border:2px solid transparent}.sum.nfs span.on{border-color:#2563eb;background:#eff6ff}.nnote{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:12px;white-space:pre-wrap}
+.nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}.nst.tc{margin-left:4px}nav.n8{gap:4px;padding-left:8px;padding-right:8px}nav.n8 button{font-size:10.5px;letter-spacing:-.4px;min-width:0}nav.n8 button svg{width:20px;height:20px}.hh{margin:14px 2px 6px;font-size:15px;font-weight:800;color:#1e3a6e}.hh small{font-weight:500;color:#8a96ab;margin-left:6px}.up{color:#16a34a;font-weight:700}.dn{color:#dc2626;font-weight:700}.eq{color:#94a3b8}.hl{display:block;margin:0 0 8px;padding:10px 14px;border-radius:14px;background:#fff1f2;color:#be123c;font-size:14px;font-weight:600;text-align:left;border:0;width:100%}.hr{background:#fff;border-radius:14px;padding:10px 14px;margin:6px 0;box-shadow:0 1px 2px #0f172a0a,0 6px 16px #2563eb14}.hr b{font-size:14px}.hr p{margin:4px 0 0;white-space:pre-wrap;font-size:14px;color:#334155}.row .nfw{flex:0 0 100%;order:9;display:flex;align-items:center;gap:8px;font-size:13px;color:#55657f;margin-top:2px}.row .nfw select{flex:1;width:auto;min-width:0;margin:0;padding:8px 10px}.wks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.wks span{font-size:12px;padding:3px 8px;border-radius:9px;background:#eef2f9;color:#475569}.wks span.ok{background:#22c55e;color:#fff;font-weight:600}.wks span.sub{outline:2px dashed #fff;outline-offset:-4px}.sum.nfs span{cursor:pointer;border:2px solid transparent}.sum.nfs span.on{border-color:#2563eb;background:#eff6ff}.nnote{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:12px;white-space:pre-wrap}
 .nfl{display:block;text-align:left;font-size:12px;font-weight:600;color:#64748b;margin:10px 2px 0}.nfc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.nfcam{display:block;text-align:center;box-sizing:border-box;cursor:pointer}
 .fam{border:1px solid #e2e8f0;border-radius:12px;padding:4px 8px;margin:6px 0}.fam input{margin:3px 0;padding:8px}input.unsure,select.unsure{background:#fff7d6;border-color:#f5c26b}
 #ab>div+div{margin-top:10px;padding-top:10px;border-top:1px dashed #f5c26b}
@@ -174,7 +174,8 @@ function toast(m){const t=$('#toast');t.textContent=m;t.className='on';clearTime
 const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg>','출석통계':'<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>','보고서':'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>','심방일지':'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>','연락처':'<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>'};
 
 // ===== 관리자 전용 메뉴 =====
-const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin||U.mgr)t.push('관리');return t};
+const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin||U.mgr)t.push('관리');if(U.admin)t.unshift('홈');return t};
+ic['홈']='<svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){VG++;const m=S.adm||'보고서미제출';
   $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',장기결석:'장기<br>결석',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율',심방기록:'심방<br>기록',교사명단:'교사<br>명단'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
@@ -298,7 +299,7 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
   const nfOnly=!U.admin&&!U.mgr&&!U.classes.length&&U.nf&&U.nf.length;
   $('#tabs').style.display=nfOnly?'none':'';
   if(nfOnly){$('#tabs').innerHTML='';tab='새친구';vNf()}
-  else{$('#tabs').innerHTML=TT().map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go('출석')}
+  else{const tt=TT();$('#tabs').className=tt.length>=8?'n8':'';$('#tabs').innerHTML=tt.map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go(U.admin?'홈':'출석')}
   if(U.nf&&U.nf.length)call('nfList',{},1).then(r=>rcPut('nfList',r)).catch(()=>{});   // 새친구 화면을 미리 받아 둠
   if(U.admin||U.mgr)call('week',{date:D},1).then(r=>{rcPut('week|'+D,r);const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
   if(U.admin)call('alerts',{},1).then(a=>{if(!a||!a.length)return;abSet('ab1','<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>')}).catch(()=>{});
@@ -306,7 +307,29 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
 async function ackAl(){try{await call('alertAck',{},1);abSet('ab1','')}catch(e){toast('처리하지 못했습니다')}}
 function logout(){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
   try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0||k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
-function go(t){tab=t;VG++;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,새친구:vNf,관리:vAdm}[t])}
+function go(t){tab=t;VG++;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({홈:vHome,출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,새친구:vNf,관리:vAdm}[t])}
+// ===== 관리자 홈: 주일 전체 상황 한눈에 =====
+// 재적·교사, 출석/결석과 지난주 대비, 새친구 현황, 보고서의 기도제목·특이사항
+function vHome(){$('#v').innerHTML=`<select id="hd" style="text-align:center;text-align-last:center;font-weight:700;color:#1d4a94">${sunOpts(D)}</select><div id="hl">불러오는 중…</div>`;
+  const f=()=>run(async()=>{const d=$('#hd').value;await swr('home','home|'+d,bg=>call('home',{date:d},bg),r=>{S.hr=r;hDraw()})});$('#hd').onchange=f;f()}
+const dlt=(n,u,inv)=>n>0?`<span class="${inv?'dn':'up'}">▲${n}${u||''}</span>`:n<0?`<span class="${inv?'up':'dn'}">▼${-n}${u||''}</span>`:`<span class="eq">–</span>`;   // inv: 결석처럼 늘면 나쁜 값
+const rt=(a,b)=>a+b?Math.round(a/(a+b)*100):null;
+function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,o)=>x+(o[k]||0),0);
+  const A=sm('a'),Bb=sm('b'),A0=sm('a0'),B0=sm('b0'),R=rt(A,Bb),R0=rt(A0,B0),wk=rcGet('week|'+r.date),miss=wk?wk.d.list.filter(x=>!x.done).length:0;
+  const nf=L.map(o=>o.nf),nfs=k=>nf.reduce((x,o)=>x+(o?o[k]||0:0),0);
+  let h=(miss?`<button class="hl" onclick="S.adm='보고서미제출';go('관리')">📝 보고서 미제출 ${miss}개 반 · 확인하기 ›</button>`:'')+
+   `<div class="hh">${lbl(r.date)} 주일 전체 현황<small>지난주 ${lbl(r.prev)} 대비</small></div>`+
+   `<div class="sum"><span><b>${sm('stu')}</b>재적 학생</span><span><b>${r.tchAll||0}</b>교사</span><span class="a"><b>${A}</b>출석 ${dlt(A-A0)}</span><span class="b"><b>${Bb}</b>결석 ${dlt(Bb-B0,'',1)}</span></div>`+
+   `<p style="margin:0 2px 4px;font-size:14px;color:#475569">출석률 <b>${R==null?'-':R+'%'}</b> · 지난주 ${R0==null?'-':R0+'%'} ${R!=null&&R0!=null?dlt(R-R0,'%p'):''}</p>`+
+   `<table><tr><th>부</th><th>재적</th><th>교사</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+
+   L.map(o=>{const x=rt(o.a,o.b),y=rt(o.a0,o.b0);return`<tr><td><b>${esc(o.bu)}</b></td><td>${o.stu}</td><td>${o.tch}</td><td>${o.a} ${dlt(o.a-o.a0)}</td><td>${o.b}</td><td>${x==null?'-':x+'%'}${x!=null&&y!=null?' '+dlt(x-y):''}</td></tr>`}).join('')+`</table>`+
+   `<div class="hh">새친구 현황<small>이번 주 교육출석 ${nfs('wk')}명</small></div>`+
+   `<table onclick="go('새친구')" style="cursor:pointer"><tr><th>부</th><th>교육 중</th><th>반배정 대기</th><th>배정 완료</th><th>교육출석</th></tr>`+
+   L.map(o=>`<tr><td><b>${esc(o.bu)}</b></td><td>${o.nf['교육중']}</td><td>${o.nf['수료']?`<b class="dn">${o.nf['수료']}</b>`:0}</td><td>${o.nf['배정완료']}</td><td>${o.nf.wk}</td></tr>`).join('')+`</table>`;
+  const P=(r.reps||[]).filter(x=>x.prayer),N=(r.reps||[]).filter(x=>x.note),m=S.hm||'p',Q=m=='p'?P:N;
+  h+=`<div class="hh">반모임 보고서 모아보기</div><div class="chips">${[['p','기도제목 '+P.length],['n','특이사항 '+N.length]].map(([k,t])=>`<button class="${m==k?'on':''}" onclick="S.hm='${k}';hDraw()">${t}</button>`).join('')}</div>`+
+   (Q.length?Q.map(x=>`<div class="hr"><b>${esc(x.cls)}</b> <small>${x.by?esc(x.by)+' 선생님':''}</small><p>${esc(m=='p'?x.prayer:x.note)}</p></div>`).join(''):`<p><small>이 주일에 작성된 ${m=='p'?'기도제목':'특이사항'}이 없습니다.</small></p>`);
+  $('#hl').innerHTML=h}
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
 
 // ===== 새친구: 등록카드 · 교육 출석 · 수료 · 반배정 (권한 있는 선생님에게만 탭이 보임) =====
