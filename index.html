@@ -319,22 +319,24 @@ function vNf(){VG++;const m=S.nfm||'명단';
   if($('#nb')){if(S.nfb&&(U.nf.includes(S.nfb)||S.nfb=='전체'))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
   run({명단:nfList,교육출석:nfAtt,등록카드:()=>nfForm(S.nfe)}[m])}
 async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
-  await swr('nfList','nfList',bg=>call('nfList',{},bg),r=>{const bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()})}
+  await swr('nfList','nfList',bg=>call('nfList',{},bg),r=>{S.nlead=r.lead||[];S.ncls=r.cls||null;const bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()})}
 // 위의 숫자 칸을 누르면 그 상태의 새친구만 보임 (전체를 누르면 모두)
 function nfListDraw(){const A=S.nla||[],f=S.nfst||'',L=f?A.filter(o=>o.st==f):A,cnt=k=>A.filter(o=>o.st==k).length;S.nl=L;
   const box=(k,c,t,n)=>`<span class="${c}${f==k?' on':''}" onclick="S.nfst='${k}';nfListDraw()"><b${k=='수료'?' style="color:#2563eb"':''}>${n}</b>${t}</span>`;
   $('#a').innerHTML=`<div class="sum nfs">${box('','','전체',A.length)}${box('교육중','a','교육 중',cnt('교육중'))}${box('수료','','수료',cnt('수료'))}${box('배정완료','c','배정 완료',cnt('배정완료'))}</div>`+
    `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):`<p>${f?esc(f)+' 상태인 새친구가 없습니다.':'등록된 새친구가 없습니다.'}</p>`)}
-function nfCard(o,i){const cs=U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
+// 관리자 또는 그 부의 새친구 팀장: 반배정·수료 취소·배정완료 수정·삭제 가능
+const nfLd=b=>!!(U.admin||(U.nfLead||[]).includes(b)||(S.nlead||[]).includes(b));
+function nfCard(o,i){const cs=(S.ncls&&S.ncls[o.bu])||U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
   return `<div class="card"><b>${esc(o.name)}</b> <small>${S.nall?esc(o.bu)+' · ':''}${esc(o.school||'')} ${esc(o.grade||'')}</small> <span class="nst${sc}">${esc(o.st)}</span>${o.tch?`<span class="nst tc" style="background:${tcCol(o.tch)}">${esc(o.tch)}</span>`:''}`+
    `<p><small>교육 ${dots(o.n)} ${o.n}/${NFW}주 · 등록 ${esc(md(o.reg))}${o.guide?' · 인도 '+esc(o.guide):''}</small></p>`+
    (o.st=='배정완료'?`<p><small>✅ ${esc(o.cls)} 배정${o.asg?' ('+esc(md(o.asg))+')':''}</small></p>`:'')+
    (o.note?`<p class="nnote">📝 ${esc(o.note)}</p>`:'')+
    `<p><button class="vb" onclick="S.nfm='등록카드';S.nfe='${esc(o.id)}';vNf()">상세정보 보기·수정</button>`+
    (o.st=='교육중'&&o.n>=NFW?`<button class="vb" onclick="nfDone(${i})">수료 처리</button>`:'')+
-   (o.st=='수료'&&U.admin?`<button class="vb dl" onclick="nfUndo(${i})">수료 취소</button>`:'')+'</p>'+
-   (o.st=='수료'&&U.admin?`<div class="bar"><select id="ac${i}"><option value="">배정할 반 선택</option>${opts(cs)}</select><button class="vb" onclick="nfAsg(${i})">반배정</button></div>`:'')+
-   (o.st=='수료'&&!U.admin?'<p><small>관리자가 반을 배정하면 그 반 선생님께 알림이 갑니다.</small></p>':'')+'</div>'}
+   (o.st=='수료'&&nfLd(o.bu)?`<button class="vb dl" onclick="nfUndo(${i})">수료 취소</button>`:'')+'</p>'+
+   (o.st=='수료'&&nfLd(o.bu)?`<div class="bar"><select id="ac${i}"><option value="">배정할 반 선택</option>${opts(cs)}</select><button class="vb" onclick="nfAsg(${i})">반배정</button></div>`:'')+
+   (o.st=='수료'&&!nfLd(o.bu)?'<p><small>관리자·새친구 팀장이 반을 배정하면 그 반 선생님께 알림이 갑니다.</small></p>':'')+'</div>'}
 // 담당교사 색: 이름마다 늘 같은 색 (상태 색인 초록·파랑·회색과 겹치지 않게)
 const TCC=['#f97316','#8b5cf6','#db2777','#0d9488','#ca8a04','#4f46e5','#dc2626','#0891b2'];
 function tcCol(n){let h=0;for(const c of String(n))h=(h*31+c.charCodeAt(0))%9973;return TCC[h%TCC.length]}
@@ -366,7 +368,7 @@ const NFC=[['성별',['남','여']],['신앙생활',['방문','등록','기타']
 async function nfForm(id){$('#a').innerHTML='불러오는 중…';
   const [r,t]=await Promise.all([id?call('nfGet',{id}):{fam:[],'등록신청일':nowIso()},S.ntch?S.ntch:call('nfTch').catch(()=>({}))]);S.ntch=t&&Object.keys(t).length?t:null;S.nr=r;S.nph='';S.nun=[];S.ncv={};NFC.forEach(([k])=>S.ncv[k]=r[k]||'');nfDraw()}
 const nfFam=f=>`<div class="fam"><div class="bar"><input placeholder="관계" class="fr" value="${esc(f.rel||'')}"><input placeholder="이름" class="fn" value="${esc(f.name||'')}"></div><div class="bar"><input placeholder="생년월일" class="fb" value="${esc(f.birth||'')}"><input placeholder="전화번호" class="ft" type="tel" value="${esc(f.tel||'')}"></div><div class="bar"><input placeholder="직분" class="fo" value="${esc(f.role||'')}"><input placeholder="섬기는 교회" class="fc" value="${esc(f.church||'')}"></div></div>`;
-function nfDraw(){const r=S.nr,ro=r.st=='배정완료'&&!U.admin;
+function nfDraw(){const r=S.nr,ro=r.st=='배정완료'&&!nfLd(r.bu);
   $('#a').innerHTML=`<div class="card"><b>${r.id?esc(r['이름'])+' 등록카드':'새 등록카드'}</b>${r.id?` <small>${esc(r.st)}${r.days&&r.days.length?' · 교육 '+r.days.length+'/'+NFW+'주':''}${r.photo?' · 사진 보관됨':''}</small>`:''}`+
    (r.id?'':`<label class="p nfcam">📷 등록카드 사진으로 채우기<input type="file" accept="image/*" hidden onchange="nfPic(this)"></label><p class="nfl" id="ocm">카드를 평평한 곳에 두고, 카드 한 장만 화면에 가득 차게 위에서 찍어 주세요. 글씨를 읽어 칸을 채워 드려요. (사진은 저장하지 않아요)</p>`)+
    (U.nf.length>1?`<label class="nfl">부서</label><select id="nf_bu">${opts(U.nf)}</select>`:'')+
@@ -376,10 +378,10 @@ function nfDraw(){const r=S.nr,ro=r.st=='배정완료'&&!U.admin;
    `<label class="nfl">가족 관계</label><div id="fams">${(r.fam&&r.fam.length?r.fam:[{}]).map(nfFam).join('')}</div><button class="vb" onclick="nfFamAdd()">+ 가족 추가</button>`+
    `<label class="nfl">특이사항 (선생님이 직접 입력)</label><textarea id="nf_특이사항" rows="3" placeholder="예) 친구 ○○가 전도함, 가정 상황 등">${esc(r['특이사항']||'')}</textarea>`+
    `<label class="nfl">등록신청일</label><input id="nf_등록신청일" type="date" value="${esc(r['등록신청일']||nowIso())}">`+
-   (ro?'<p><small>반배정이 끝난 카드는 관리자만 고칠 수 있어요.</small></p>':`<button class="p" onclick="run(nfSave)">저장</button>`)+
-   (r.id?`<p><button class="vb" onclick="S.nfm='명단';vNf()">← 목록으로</button>${U.admin||r.st=='교육중'?`<button class="vb dl" onclick="nfDel()">삭제</button>`:''}</p>`:'')+'</div>';
+   (ro?'<p><small>반배정이 끝난 카드는 관리자·새친구 팀장만 고칠 수 있어요.</small></p>':`<button class="p" onclick="run(nfSave)">저장</button>`)+
+   (r.id?`<p><button class="vb" onclick="S.nfm='명단';vNf()">← 목록으로</button>${nfLd(r.bu)||r.st=='교육중'?`<button class="vb dl" onclick="nfDel()">삭제</button>`:''}</p>`:'')+'</div>';
   if($('#nf_bu')){$('#nf_bu').value=r.bu||(U.nf.includes(S.nfb)?S.nfb:U.nf[0]);$('#nf_bu').onchange=nfTchOpts}
-  const te=$('#nf_담당교사');if(!r.id&&!te.dataset.v){const bu=$('#nf_bu')?$('#nf_bu').value:U.nf[0];if(((S.ntch||{})[bu]||[]).includes(U.name))te.dataset.v=U.name}nfTchOpts()}
+  const te=$('#nf_담당교사');if(!r.id&&!te.dataset.v){const bu=$('#nf_bu')?$('#nf_bu').value:U.nf[0];if(((S.ntch||{})[bu]||[]).includes(U.name)&&!nfLd(bu))te.dataset.v=U.name}nfTchOpts()}
 function nfFamAdd(){if($('#fams').children.length<8)$('#fams').insertAdjacentHTML('beforeend',nfFam({}))}
 function nfPick(b,k,x){S.ncv[k]=S.ncv[k]==x?'':x;[...b.parentNode.children].forEach(e=>e.className=e.textContent==S.ncv[k]?'o':'')}
 // 사진을 긴 변 2000px 이하 JPEG로 줄여서 보냄 (전송 시간 단축)
@@ -397,6 +399,7 @@ async function nfPic(inp){const f=inp.files&&inp.files[0];if(!f)return;const m=$
     else m.textContent=r.msg||'칸을 직접 채워 주세요.'}
   catch(e){m.textContent=e.message}inp.value=''}
 async function nfSave(){const f={};NFF.forEach(([k])=>f[k]=$('#nf_'+k).value);NFC.forEach(([k])=>f[k]=S.ncv[k]||'');f['등록신청일']=$('#nf_등록신청일').value;f['특이사항']=$('#nf_특이사항').value;f['담당교사']=$('#nf_담당교사').value;
+  {const bu=$('#nf_bu')?$('#nf_bu').value:(S.nr.bu||U.nf[0]);if(!f['담당교사']&&((S.ntch||{})[bu]||[]).length)throw new Error('담당교사를 선택해 주세요.')}
   const fam=[...document.querySelectorAll('#fams .fam')].map(e=>({rel:e.querySelector('.fr').value,name:e.querySelector('.fn').value,birth:e.querySelector('.fb').value,tel:e.querySelector('.ft').value,role:e.querySelector('.fo').value,church:e.querySelector('.fc').value}));
   if(!f['이름'].trim())throw new Error('이름을 입력해 주세요.');
   if(f['개인정보동의']!=='예'&&!confirm('개인정보 수집·제공 동의가 "예"로 선택되지 않았어요. 그래도 저장할까요?'))return;
