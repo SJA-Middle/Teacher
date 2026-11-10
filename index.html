@@ -438,9 +438,12 @@ function nfParse_(r) {
   const NOTE = /^\*?(이름|연락처|본인과|관계를|적어주세요)[,!]*$/;
   const PRINT = /^(남|여|남\/여|\/|방문|등록|기타|세례|입교|학습|유아세례|년|월|일|세|\(|\))$/;
   // 칸 이름 오른쪽(같은 줄)의 손글씨: u는 [시작, 끝], v는 칸 이름 줄 ±55
-  const grab = (k, uTo, extra) => { const l = L[k];
-    return W.filter(w => !labelWords.has(w) && w.u - w.hw > l.u + 55 && w.u < uTo && Math.abs(w.v - l.v) < 56 && !PRINT.test(w.t) && !(extra && extra(w)))
-      .sort((p, q) => (Math.abs(p.v - q.v) > 30 ? p.v - q.v : p.u - q.u)).map(w => w.t).join(' ').trim(); };
+  const grab = (k, uTo, extra, dv) => { const l = L[k];
+    return W.filter(w => !labelWords.has(w) && w.u - w.hw > l.u + 55 && w.u < uTo && Math.abs(w.v - l.v) < (dv || 56) && !PRINT.test(w.t) && !(extra && extra(w)))
+      .sort((p, q) => (Math.abs(p.v - q.v) > 30 ? p.v - q.v : p.u - q.u)).reduce((o, w, i, a) => o + (i && sp(a[i - 1], w) ? ' ' : '') + w.t, '').trim(); };
+  // 단어 사이 띄어쓰기: Vision이 '귀인로'를 '귀인'+'로'로 나눠 읽어도 붙어 있으면 붙여 씀
+  function sp(p, w) { if (Math.abs(p.v - w.v) > 30) return true; if (/^[,.)\]]/.test(w.t) || /[(\[]$/.test(p.t)) return false;
+    return (w.u - w.hw) - (p.u + p.hw) > 14; }
   const midU = (L['생년월일'].u + L['이름'].u) / 2 + 220;   // 왼쪽 칸과 오른쪽 칸의 경계 (오른쪽 칸 이름 바로 앞)
   const leftEnd = k => L[k].u - 75;
   const tel = s => { const d = String(s).split(/\s+/).filter(t => /^[\d\-oOlI.()모부]+$/.test(t) && /\d/.test(t)).join('').replace(/[oO]/g, '0').replace(/[lI]/g, '1').replace(/\D/g, '');
@@ -460,10 +463,10 @@ function nfParse_(r) {
   const tRaw = grab('번호', leftEnd('부모번호')), pRaw = grab('부모번호', 1600);
   f.tel = tel(tRaw); if (!f.tel && tRaw) f.unsure.push('학생연락처');
   f.ptel = tel(pRaw); if (!f.ptel && pRaw) f.unsure.push('보호자연락처');
-  f.addr = grab('주소', 1600);
+  f.addr = grab('주소', 1600, null, 72);
   f.school = grab('소속학교', 1600).replace(/\s+/g, '');
   f.prev = grab('이전교회', leftEnd('소속학교'));
-  f.guide = grab('인도자', 1600, w => NOTE.test(w.t));
+  f.guide = grab('인도자', 1600, w => NOTE.test(w.t) || /^[*,.!]+$/.test(w.t) || /^\*?(본인|과|관계|를|적어|주세요|이름|연락처)[,!]*$/.test(w.t)).replace(/^[\s*,.!]+|[\s*,.!]+$/g, '');
   // 부서명(예: '열린' → 3부)과 등록신청일: 칸 이름 오른쪽의 글자
   const near = (re, du, dv) => { const lab = W.find(w => re.test(norm(w.t))); if (!lab) return '';
     return W.filter(w => w !== lab && w.u > lab.u && w.u < lab.u + du && Math.abs(w.v - lab.v) < dv).sort((p, q) => p.u - q.u).map(w => w.t).join(' '); };
@@ -474,9 +477,14 @@ function nfParse_(r) {
     const dt = y4 + '-' + ('0' + mm).slice(-2) + '-' + ('0' + dd).slice(-2); if (/^20\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dt)) f.reg = dt; }
   // --- 가족 표: 머리글(전화번호·직분·섬기는 교회) 아래, 관계·이름 칸 글자로 줄을 나누고 각 글자를 가장 가까운 머리글 칸에 넣음
   f.fam = [];
+  const REL = /^(부|모|아버지|어머니|아빠|엄마|부친|모친|형|오빠|누나|언니|동생|남동생|여동생|자매|형제|남매|쌍둥이|조부|조모|할아버지|할머니|외할아버지|외할머니|고모|이모|삼촌|보호자|본인)$/;
+  // 010 번호인데 한 자리가 빠졌으면, 위에서 읽은 학생·부모 번호 중 한 자리만 다른 것으로 바로잡음
+  const fixTel = t => { const d = t.replace(/\D/g, ''); if (d.length !== 10 || !/^010/.test(d)) return t;
+    const k = [f.tel, f.ptel].map(x => String(x || '').replace(/\D/g, '')).find(x => x.length === 11 && [...x].some((_, i) => x.slice(0, i) + x.slice(i + 1) === d));
+    if (k) return nfTel_(k); if (f.unsure.indexOf('가족 연락처') < 0) f.unsure.push('가족 연락처'); return t; };
   const hv = L['전화번호'].v, hu = L['전화번호'].u, sc = (L['직분'].u - hu) / (1065 - 870) || 1;   // 표 머리글 기준 (표 폭 비율)
   const colU = { rel: hu - 720 * sc, name: hu - 490 * sc, birth: hu - 227 * sc, tel: hu, role: L['직분'].u, church: L['섬기는'].u + 45 * sc };
-  const foot = W.filter(w => w.v > hv + 60 && /드림공동체|부모님께|개인정보|등록신청일/.test(w.t)).reduce((m, w) => Math.min(m, w.v), hv + 800);
+  const foot = W.filter(w => w.v > hv + 60 && /드림|공동체|부모님|개인정보|등록신청일|괜찮|참여/.test(w.t)).reduce((m, w) => Math.min(m, w.v), hv + 800);
   const T = W.filter(w => !labelWords.has(w) && w.v > hv + 55 && w.v < foot - 25 && w.u > colU.rel - 120 && w.u < colU.church + 220 && !/^(가족|관계|이름|생년월일|교회)$/.test(w.t));
   const colOf = w => { let k = 'rel', bd = Infinity; const num = /^[\d\-.\/?()]+$/.test(w.t);   // 숫자 조각은 생년월일·전화번호 칸에만
     Object.keys(colU).filter(c => !num || c === 'birth' || c === 'tel').forEach(c => { const d = Math.abs(w.u - colU[c]); if (d < bd) { bd = d; k = c; } }); return k; };
@@ -488,7 +496,10 @@ function nfParse_(r) {
     const e = {};
     T.filter(w => { let bi = -1, bd = Infinity; rows.forEach((h, i) => { const d = Math.abs(w.v - h.c); if (d < bd) { bd = d; bi = i; } }); return rows[bi] === g && bd < 85; })
       .sort((p, q) => (Math.abs(p.v - q.v) > 25 ? p.v - q.v : p.u - q.u)).forEach(w => { e[w.col] = ((e[w.col] || '') + (w.col === 'tel' || w.col === 'birth' ? '' : ' ') + w.t).trim(); });
-    if (e.tel) e.tel = tel(e.tel) || e.tel;
+    if (e.tel) { const t = tel(e.tel); e.tel = t ? fixTel(t) : e.tel; }
+    if (e.rel) { const ws = e.rel.split(/\s+/), ri = ws.findIndex(x => REL.test(x));   // '자매 전' + '은율' → 관계 '자매', 이름 '전은율'
+      if (ri >= 0 && ws.length > 1) { e.name = ws.filter((x, i) => i !== ri).join('') + (e.name || ''); e.rel = ws[ri]; } }
+    if (!(e.rel && REL.test(e.rel)) && !(e.name && /^[가-힣]{2,4}$/.test(e.name.replace(/\s+/g, '')))) return;   // 관계도 이름도 아닌 줄(안내문 등)은 버림
     if (e.church && /^[xX×]$/.test(e.church)) e.church = '';
     if (e.name) e.name = e.name.replace(/\s+/g, '');
     if (e.rel || e.name) f.fam.push({ rel: e.rel || '', name: e.name || '', birth: e.birth || '', tel: e.tel || '', role: e.role || '', church: (e.church || '').replace(/\s+/g, '') });
