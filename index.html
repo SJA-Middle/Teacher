@@ -181,16 +181,16 @@ function vAdm(){VG++;const m=S.adm||'보고서미제출';
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
-  try{const r=await call('tchList');S.tl=r;
-    a.innerHTML=r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.init?'아직 PIN 미설정(000000)':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'}
+  try{await swr('tchList','tchList',bg=>call('tchList',{},bg),r=>{S.tl=r;
+    a.innerHTML=r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.init?'아직 PIN 미설정(000000)':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
   catch(e){a.innerHTML='<p>'+esc(e.message)+'</p>'}}
 function pinRs(i){const o=S.tl[i];if(!confirm(o.name+' 선생님의 PIN을 000000으로 초기화할까요?\n다음 로그인 때 새 PIN을 정하게 됩니다.'))return;
   run(async()=>{await call('pinReset',{name:o.name});toast('초기화되었습니다');aTch()})}
 function aMiss(){$('#a').innerHTML=`<select id="w">${sunOpts(D)}</select><div id="l">불러오는 중…</div>`;
-  const f=()=>run(async()=>{const r=await call('week',{date:$('#w').value}),no=r.list.filter(x=>!x.done),ok=r.list.filter(x=>x.done);
+  const f=()=>run(async()=>{const q={date:$('#w').value};await swr('week','week|'+q.date,bg=>call('week',q,bg),r=>{const no=r.list.filter(x=>!x.done),ok=r.list.filter(x=>x.done);
     $('#l').innerHTML=`<div class="sum"><span class="${no.length?'b':'a'}"><b>${no.length}</b>미제출</span><span class="a"><b>${ok.length}</b>제출</span></div>`+
     ((S.mi=no).length?`<button class="p" onclick="askAll()">미제출 선생님께 요청 메시지 보내기</button>`+no.map((x,i)=>`<div class="row"><div><b>${esc(x.cls)}</b><br><small>${x.tch&&x.tch.length?esc(x.tch.join(', '))+' 선생님':'담당 선생님 미등록'}</small></div><button class="vb" onclick="ask(${i})">요청 보내기</button></div>`).join(''):'<p>모든 반이 제출했습니다.</p>')+
-    (ok.length?`<p><small>제출 완료: ${ok.map(x=>esc(x.cls)).join(', ')}</small></p>`:'')});
+    (ok.length?`<p><small>제출 완료: ${ok.map(x=>esc(x.cls)).join(', ')}</small></p>`:'')})});
   $('#w').onchange=f;f()}
 function reqMsg(list){const u=location.origin+location.pathname.replace(/index\.html$/,'');
   return list.map(x=>(x.tch&&x.tch.length?x.tch.join(', ')+' 선생님, ':'')+x.cls+' 반모임 보고서가 아직 작성되지 않았어요. 이번 주('+lbl(D)+') 보고서 작성 부탁드립니다 🙏').join('\n')+'\n\n▶ 작성하기: '+u}
@@ -199,7 +199,7 @@ async function sendTxt(t){try{if(navigator.share){await navigator.share({text:t}
 function ask(i){sendTxt(reqMsg([S.mi[i]]))}
 function askAll(){sendTxt(reqMsg(S.mi))}
 async function aLong(){$('#a').innerHTML='<div id="l">불러오는 중…</div>';lgLoad()}
-function lgLoad(){$('#l').innerHTML='불러오는 중…';run(async()=>{S.la=await call('care',{min:4,bu:S.lbv||'전체'});S.lf=S.lf||0;lgR()})}
+function lgLoad(){$('#l').innerHTML='불러오는 중…';run(async()=>{const bu=S.lbv||'전체';await swr('care','care|'+bu,bg=>call('care',{min:4,bu},bg),d=>{S.la=d;S.lf=S.lf||0;lgR()})})}
 const LG=[['4주 ~ 6개월',o=>o.n<26],['🐑 6개월 ~ 1년',o=>o.n>=26&&o.n<52],['🐑🐑 1년 이상',o=>o.n>=52]];
 function lgR(){const a=S.la||[],F=S.lf||0,row=o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(md(o.last))}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`;
   const chips=['전체',...LG.map(x=>x[0].replace(/ /g,'').replace('🐑🐑','').replace('🐑',''))].map((k,i)=>`<button class="${i==F?'sel':''}" onclick="S.lf=${i};lgR()">${k}</button>`).join('');
@@ -211,8 +211,8 @@ function sumText(r){let A=0,B=0;r.list.filter(x=>x.done).forEach(x=>{A+=x.a;B+=x
     s+=`• ${x.cls} — 출석 ${x.a} / 결석 ${x.b}`+(x.absent.length?` (${x.absent.map(a=>a.name+(a.reason?'·'+a.reason:'')).join(', ')})`:'')+'\n';
     if(x.prayer)s+=`  기도제목: ${String(x.prayer).replace(/\n/g,' ')}\n`;if(x.note)s+=`  특이사항: ${String(x.note).replace(/\n/g,' ')}\n`});return s}
 function aSum(){$('#a').innerHTML=`<select id="w">${sunOpts(D)}</select><div id="l">불러오는 중…</div>`;
-  const f=()=>run(async()=>{const r=await call('week',{date:$('#w').value});S.sm=sumText(r);
-    $('#l').innerHTML=`<button class="p" onclick="copyT()">전체 복사</button><pre class="sm">${esc(S.sm)}</pre>`});
+  const f=()=>run(async()=>{const q={date:$('#w').value};await swr('week','week|'+q.date,bg=>call('week',q,bg),r=>{S.sm=sumText(r);
+    $('#l').innerHTML=`<button class="p" onclick="copyT()">전체 복사</button><pre class="sm">${esc(S.sm)}</pre>`})});
   $('#w').onchange=f;f()}
 async function copyT(){try{await navigator.clipboard.writeText(S.sm)}catch(e){const t=document.createElement('textarea');t.value=S.sm;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}toast('복사되었습니다')}
 function chart(p){const W=340,Hh=190,L=32,R=12,T0=16,B=26,iw=W-L-R,ih=Hh-T0-B,n=p.length,x=i=>L+(n>1?iw*i/(n-1):iw/2),y=v=>T0+ih*(1-v/100);
@@ -227,12 +227,13 @@ function aTrend(){$('#a').innerHTML=`<div class="flt"><select id="n"><option val
   if(S.tg)$('#tg').value=S.tg;
   // 한 주의 출석·결석: 부와 학년을 골라서 합침 (학년 정보가 없는 예전 서버 응답이면 부 기준)
   const pick=(w,b,g)=>{if(g=='전체 학년')return b=='전체'?w:(w.bu[b]||{a:0,b:0});const o={a:0,b:0};Object.keys(w.gr||{}).forEach(k=>{const [B,G]=k.split('|');if(G==g&&(b=='전체'||B==b)){o.a+=w.gr[k].a;o.b+=w.gr[k].b}});return o};
-  const f=()=>run(async()=>{S.tg=$('#tg').value;const r=S.trw==$('#n').value&&S.trr?S.trr:await call('trend',{weeks:+$('#n').value}),b=$('#tb').value,g=$('#tg').value;S.trr=r;S.trw=$('#n').value;
+  const f=()=>run(async()=>{S.tg=$('#tg').value;if(S.trr&&S.trw==$('#n').value)return draw(S.trr);const w=$('#n').value;await swr('trend','trend|'+w,bg=>call('trend',{weeks:+w},bg),r=>{S.trr=r;S.trw=w;draw(r)})});
+  const draw=r=>{const b=$('#tb').value,g=$('#tg').value;
     const p=r.map(w=>{const o=pick(w,b,g),n=o.a+o.b;return{d:w.date,a:o.a,b:o.b,r:n?Math.round(o.a/n*100):null}});
     // 기간 평균 학년별 비교 (고른 부 기준)
     const avg=G=>{let a=0,n=0;r.forEach(w=>{const o=pick(w,b,G);a+=o.a;n+=o.a+o.b});return n?Math.round(a/n*100):null};
     const cmp=r.some(w=>w.gr)?`<div class="sum">${['1학년','2학년','3학년'].map(G=>{const v=avg(G);return`<span style="cursor:pointer${G==g?';outline:2px solid #2563eb':''}" onclick="$('#tg').value='${G}';$('#tg').onchange()"><b style="color:#2563eb">${v==null?'-':v+'%'}</b>${G} 평균</span>`}).join('')}</div>`:'';
-    $('#l').innerHTML=cmp+chart(p)+`<table><tr><th>주일</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+p.slice().reverse().map(o=>`<tr><td>${md(o.d)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.r==null?'-':o.r+'%'}</td></tr>`).join('')+`</table>`});
+    $('#l').innerHTML=cmp+chart(p)+`<table><tr><th>주일</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+p.slice().reverse().map(o=>`<tr><td>${md(o.d)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.r==null?'-':o.r+'%'}</td></tr>`).join('')+`</table>`};
   $('#n').onchange=()=>{S.trr=null;f()};$('#tb').onchange=$('#tg').onchange=f;S.trr=null;f()}
 function aVisit(){$('#a').innerHTML=`<div class="card"><b>심방 기록 남기기</b><input id="vq" placeholder="학생 이름 검색"><select id="vs"></select><input type="date" id="vd" value="${nowIso()}"><textarea id="vn" rows="3" placeholder="심방 내용 (방문·통화·만남 등)"></textarea><button class="p" onclick="run(visitSave)">저장</button></div><div id="l">불러오는 중…</div>`;
   run(async()=>{const [pp,lg]=await Promise.all([S.pp||call('people',{bu:'전체'}),call('careLog',{})]);S.pp=pp;
@@ -259,11 +260,23 @@ async function call(a,p,bg){
     let j;
     try{j=await r.json()}catch(e){throw new Error('서버 응답을 읽을 수 없습니다. 잠시 후 다시 시도해 주세요.')}
     if(!j.ok)throw new Error(j.error||'알 수 없는 오류');
-    if(ck)PC[ck]={t:Date.now(),d:j.data};
+    if(ck)PC[ck]={t:Date.now(),d:j.data};if(WR.test(a)){rcClear();for(const k in PC)delete PC[k]}
     if(!bg&&g!==VG)throw Object.assign(new Error(''),{stale:true});   // 그사이 다른 화면으로 옮겼으면 조용히 버림
     return j.data;
   }finally{busy(-1)}
 }
+// ===== 빠른 화면 (지난번 내용 먼저 보여주기) =====
+// 목록 화면은 기기에 저장해 둔 지난번 내용을 곧바로 그리고, 서버의 최신 내용이 도착하면 달라진 경우에만 다시 그림.
+// 무언가를 저장·삭제하면 저장해 둔 내용은 모두 지워서 옛 내용이 보이지 않게 함. 로그아웃하면 기기에서도 지움.
+const RC={},SW={},WR=/^(save|nf(Save|AttSave|Del|Done|Undo|Assign)|care(Add|Del|Edit)|rep(Edit|Del)|pinReset)$/;
+function rcGet(k){if(RC[k])return RC[k];try{const v=JSON.parse(localStorage.getItem('rc|'+k));if(v&&Date.now()-v.t<864e5)return RC[k]=v}catch(e){}return null}
+function rcPut(k,d){const v={t:Date.now(),d};RC[k]=v;try{localStorage.setItem('rc|'+k,JSON.stringify(v))}catch(e){}}
+function rcClear(){for(const k in RC)delete RC[k];try{Object.keys(localStorage).filter(k=>k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+async function swr(site,k,get,draw){const g=VG,my=SW[site]=(SW[site]||0)+1,c=rcGet(k);
+  if(c)draw(c.d,1);
+  let d;try{d=await get(!!c)}catch(e){if(c)return;throw e}   // 지난 내용을 보여주고 있으면 통신 오류는 조용히 넘어감
+  if(g!==VG||SW[site]!==my)return;                              // 그사이 다른 화면·다른 조건으로 바뀌었으면 버림
+  if(!c||JSON.stringify(c.d)!==JSON.stringify(d)){rcPut(k,d);draw(d,0)}}
 // 오류 표시: 화면이 바뀌어 버린 응답은 무시하고, 프로그램 내부 오류(코드 문장)는 사용자에게 보이지 않게 쉬운 말로 바꿈
 async function run(f){try{await f()}catch(e){if(e&&e.stale)return;console.error(e);
   alert(e instanceof TypeError||e instanceof ReferenceError||e instanceof RangeError||e instanceof SyntaxError?'화면을 불러오는 중 문제가 생겼어요. 다시 한 번 눌러 주세요.':(e&&e.message)||e)}}
@@ -286,12 +299,13 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
   $('#tabs').style.display=nfOnly?'none':'';
   if(nfOnly){$('#tabs').innerHTML='';tab='새친구';vNf()}
   else{$('#tabs').innerHTML=TT().map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go('출석')}
-  if(U.admin||U.mgr)call('week',{date:D},1).then(r=>{const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
+  if(U.nf&&U.nf.length)call('nfList',{},1).then(r=>rcPut('nfList',r)).catch(()=>{});   // 새친구 화면을 미리 받아 둠
+  if(U.admin||U.mgr)call('week',{date:D},1).then(r=>{rcPut('week|'+D,r);const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
   if(U.admin)call('alerts',{},1).then(a=>{if(!a||!a.length)return;abSet('ab1','<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>')}).catch(()=>{});
   if(U.classes.length)call('notices',{},1).then(a=>{if(!a||!a.length)return;abSet('ab2','<b>🌱 우리 반에 새친구가 왔어요!</b><br>'+a.map(x=>esc(x.name)+' <small>'+esc(x.cls)+(x.school?' · '+esc(x.school):'')+(x.grade?' '+esc(x.grade):'')+'</small>').join('<br>')+'<br><small>새친구 교육을 마치고 반에 배정되었어요. 따뜻하게 맞아 주세요 🙏</small><br><button onclick="ackNf()">확인했어요</button>')}).catch(()=>{})}
 async function ackAl(){try{await call('alertAck',{},1);abSet('ab1','')}catch(e){toast('처리하지 못했습니다')}}
 function logout(){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
-  try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
+  try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0||k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
 function go(t){tab=t;VG++;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,새친구:vNf,관리:vAdm}[t])}
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
 
@@ -305,7 +319,7 @@ function vNf(){VG++;const m=S.nfm||'명단';
   if($('#nb')){if(S.nfb&&(U.nf.includes(S.nfb)||S.nfb=='전체'))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
   run({명단:nfList,교육출석:nfAtt,등록카드:()=>nfForm(S.nfe)}[m])}
 async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
-  const r=await call('nfList'),bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()}
+  await swr('nfList','nfList',bg=>call('nfList',{},bg),r=>{const bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()})}
 // 위의 숫자 칸을 누르면 그 상태의 새친구만 보임 (전체를 누르면 모두)
 function nfListDraw(){const A=S.nla||[],f=S.nfst||'',L=f?A.filter(o=>o.st==f):A,cnt=k=>A.filter(o=>o.st==k).length;S.nl=L;
   const box=(k,c,t,n)=>`<span class="${c}${f==k?' on':''}" onclick="S.nfst='${k}';nfListDraw()"><b${k=='수료'?' style="color:#2563eb"':''}>${n}</b>${t}</span>`;
@@ -333,16 +347,18 @@ function nfAsg(i){const o=S.nl[i],c=$('#ac'+i).value;if(!c){alert('배정할 반
   run(async()=>{await call('nfAssign',{id:o.id,cls:c});toast(c+' 반에 배정되었습니다');nfList()})}
 
 async function nfAtt(){$('#a').innerHTML=`<div class="wk"><select id="d">${sunOpts(D)}</select></div><div id="l">불러오는 중…</div>`;
-  const ld=()=>run(async()=>{$('#l').innerHTML='불러오는 중…';const bus=nfBu()=='전체'?U.nf:[nfBu()],rs=await Promise.all(bus.map(b=>call('nfAtt',{date:$('#d').value,bu:b})));
-    S.nab=bus.length>1;S.na=[].concat(...rs.map((r,i)=>r.list.map(o=>Object.assign(o,{bu:bus[i]}))));S.nst={};S.na.forEach(o=>S.nst[o.id]=o.st=='출석'?'출석':'');S.nst0=Object.assign({},S.nst);nfAttDraw()});
+  const ld=()=>run(async()=>{$('#l').innerHTML='불러오는 중…';const bus=nfBu()=='전체'?U.nf:[nfBu()],dt=$('#d').value;S.ntouch=false;
+    await swr('nfAtt','nfAtt|'+dt+'|'+bus.join(','),bg=>Promise.all(bus.map(b=>call('nfAtt',{date:dt,bu:b},bg))),rs=>{if(S.ntouch)return;   // 체크를 시작했으면 최신 내용이 와도 덮어쓰지 않음
+    S.nab=bus.length>1;S.na=[].concat(...rs.map((r,i)=>r.list.map(o=>Object.assign({},o,{bu:bus[i]}))));S.nst={};S.na.forEach(o=>S.nst[o.id]=o.st=='출석'?'출석':'');S.nst0=Object.assign({},S.nst);nfAttDraw()})});
   $('#d').onchange=ld;ld()}
 function nfAttDraw(){const L=S.na;
-  $('#l').innerHTML=L.length?L.map(o=>`<div class="row"><b class="nm">${S.nab?`<small class="gr">${esc(o.bu)}</small>`:''}${o.tch?`<small class="gr" style="background:${tcCol(o.tch)};color:#fff">${esc(o.tch)}</small>`:''}${esc(o.name)}<small class="ls">교육 ${dots(o.n)} ${o.n}/${NFW}</small></b><span class="seg"><button class="${S.nst[o.id]=='출석'?'o':''}" onclick="S.nst['${esc(o.id)}']=S.nst['${esc(o.id)}']=='출석'?'':'출석';nfAttDraw()">교육출석</button></span></div>`).join('')+
+  $('#l').innerHTML=L.length?L.map(o=>`<div class="row"><b class="nm">${S.nab?`<small class="gr">${esc(o.bu)}</small>`:''}${o.tch?`<small class="gr" style="background:${tcCol(o.tch)};color:#fff">${esc(o.tch)}</small>`:''}${esc(o.name)}<small class="ls">교육 ${dots(o.n)} ${o.n}/${NFW}</small></b><span class="seg"><button class="${S.nst[o.id]=='출석'?'o':''}" onclick="S.ntouch=true;S.nst['${esc(o.id)}']=S.nst['${esc(o.id)}']=='출석'?'':'출석';nfAttDraw()">교육출석</button></span></div>`).join('')+
    `<button class="p" onclick="run(nfAttSave)">저장 (교육출석 ${L.filter(o=>S.nst[o.id]=='출석').length}명)</button><p><small>온 새친구만 '교육출석'을 눌러 주세요. 한 번 더 누르면 취소돼요. ${NFW}주를 모두 출석하면 새친구명단에서 수료 처리할 수 있어요.</small></p>`:'<p>교육 중인 새친구가 없습니다.</p>'}
 async function nfAttSave(){const st={};S.na.forEach(o=>{if(S.nst[o.id]=='출석')st[o.id]='출석';else if((S.nst0||{})[o.id]=='출석')st[o.id]='결석'});   // 결석은 따로 체크하지 않음: 출석을 취소한 사람만 지움
   if(!Object.keys(st).length)throw new Error('교육출석을 먼저 눌러 주세요.');
   const by={};S.na.forEach(o=>{if(st[o.id])(by[o.bu]=by[o.bu]||{})[o.id]=st[o.id]});
-  for(const b of Object.keys(by))await call('nfAttSave',{date:$('#d').value,bu:b,status:by[b]});toast('저장되었습니다');nfAtt()}
+  let done=[];for(const b of Object.keys(by)){const r=await call('nfAttSave',{date:$('#d').value,bu:b,status:by[b]});if(r&&r.done)done=done.concat(r.done)}
+  if(done.length)alert(`🎉 ${done.join(', ')} 새친구가 교육 ${NFW}주를 모두 마쳐 수료되었어요.\n이제 출석체크에서는 빠지고, 새친구명단 맨 위에서 반배정을 기다려요.`);else toast('저장되었습니다');nfAtt()}
 
 // 등록카드: 글씨 칸(사진에서 자동으로 읽음)과 동그라미 칸(버튼으로 고름)
 const NFF=[['이름','이름'],['생년월일','생년월일','date'],['학년','학년','sel',['','1학년','2학년','3학년']],['학교','소속학교'],['학생연락처','본인 번호','tel'],['보호자연락처','부모 번호','tel'],['주소','주소'],['이전교회','이전교회'],['인도자','인도자 (이름·관계)']];
@@ -581,9 +597,9 @@ async function save(){const un=S.r.students.filter(s=>!S.st[s.id]).length;
 async function vStat(){
   $('#v').innerHTML=`<div class="flt"><input type="month" id="m" value="${nowIso().slice(0,7)}">${buSel(true)}<select id="c"></select></div><div id="l">불러오는 중…</div>`;
   const fill=()=>{$('#c').innerHTML=opts(['전체',...clsFor(buVal())])};fill();
-  const f=()=>run(async()=>{const a=await call('stats',{month:$('#m').value,bu:buVal(),cls:$('#c').value});
+  const f=()=>run(async()=>{const q={month:$('#m').value,bu:buVal(),cls:$('#c').value};await swr('stats','stats|'+JSON.stringify(q),bg=>call('stats',q,bg),a=>{
     $('#l').innerHTML=(a.length?`<table><tr><th>이름</th><th>반</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+
-    a.map(o=>`<tr class="go" onclick="run(()=>vStu('${o.id}'))"><td>${esc(o.name)}</td><td>${esc(o.cls)}</td><td>${o['출석']}</td><td>${o['결석']}</td><td>${o.rate==null?'-':o.rate+'%<div class="meter"><i style="width:'+o.rate+'%"></i></div>'}</td></tr>`).join('')+`</table><p><small>이름을 누르면 학생 개인별 출석 기록을 볼 수 있어요.</small></p>`:'<p>학생이 없습니다.</p>')});
+    a.map(o=>`<tr class="go" onclick="run(()=>vStu('${o.id}'))"><td>${esc(o.name)}</td><td>${esc(o.cls)}</td><td>${o['출석']}</td><td>${o['결석']}</td><td>${o.rate==null?'-':o.rate+'%<div class="meter"><i style="width:'+o.rate+'%"></i></div>'}</td></tr>`).join('')+`</table><p><small>이름을 누르면 학생 개인별 출석 기록을 볼 수 있어요.</small></p>`:'<p>학생이 없습니다.</p>')})});
   if(multi())$('#bu').onchange=()=>{fill();f()};
   $('#m').onchange=$('#c').onchange=f;f()}
 async function vStu(id){
@@ -601,13 +617,13 @@ async function vRep(){
   const cur=sun(nowIso());
   $('#v').innerHTML=`<select id="w" style="text-align:center;text-align-last:center;font-weight:700;color:#1d4a94;padding:12px"><option value="r4">최근 4주 모아보기</option>${sunOpts(cur)}</select><div class="flt">${buSel(true)}<select id="c"></select></div>${U.admin||U.mgr?`<div class="chips" id="m">${[['','전체 내용'],['p','기도제목만'],['n','특이사항만']].map(([k,t])=>`<button data-k="${k}" class="${(S.rpm||'')==k?'on':''}">${t}</button>`).join('')}</div>`:''}<div id="l">불러오는 중…</div>`;
   const fill=()=>{$('#c').innerHTML=opts(['전체',...clsFor(buVal())])};fill();
-  const f=()=>run(async()=>{let a=await call('reports',{...(w=>w=='r4'?{from:addd(cur,-21),to:addd(cur,6)}:{from:w,to:addd(w,6)})($('#w').value),bu:buVal(),cls:$('#c').value});
+  const f=()=>run(async()=>{const q={...(w=>w=='r4'?{from:addd(cur,-21),to:addd(cur,6)}:{from:w,to:addd(w,6)})($('#w').value),bu:buVal(),cls:$('#c').value};await swr('reports','reports|'+JSON.stringify(q),bg=>call('reports',q,bg),a=>{
     const md_=(U.admin||U.mgr)&&$('#m')?(S.rpm||''):'';if(md_)a=a.filter(o=>md_=='p'?o.prayer:o.note);
     S.rp=a;$('#l').innerHTML=a.length?a.map((o,i)=>md_?`<div class="card"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small><p>${br(md_=='p'?o.prayer:o.note)}</p></div>`:`<div class="card"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small>`+
       (o.att?`<p><small>출석 ${o.att['출석']} · 결석 ${o.att['결석']}</small></p>`:'')+
       (o.absent&&o.absent.length?`<p><b>결석</b> ${o.absent.map(a=>esc(a.name)+(a.reason?` (${esc(a.reason)})`:'')).join(', ')}</p>`:'')+
       (o.prayer?`<p><b>기도제목</b><br>${br(o.prayer)}</p>`:'')+(o.note?`<p><b>특이사항</b><br>${br(o.note)}</p>`:'')+
-      (!o.prayer&&!o.note?'<p><small>작성된 내용이 없습니다.</small></p>':'')+(canEd(o)?`<p><button class="vb" onclick="repEd(${i})">수정</button><button class="vb dl" onclick="repDl(${i})">삭제</button></p>`:'')+`</div>`).join(''):'<p>해당 기간에 기록된 보고서가 없습니다.</p>'});
+      (!o.prayer&&!o.note?'<p><small>작성된 내용이 없습니다.</small></p>':'')+(canEd(o)?`<p><button class="vb" onclick="repEd(${i})">수정</button><button class="vb dl" onclick="repDl(${i})">삭제</button></p>`:'')+`</div>`).join(''):'<p>해당 기간에 기록된 보고서가 없습니다.</p>'})});
   if(multi())$('#bu').onchange=()=>{fill();f()};
   $('#w').value=cur;$('#w').onchange=$('#c').onchange=f;if($('#m'))$('#m').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.rpm=b.dataset.k;$('#m').querySelectorAll('button').forEach(x=>x.className=x==b?'on':'');f()});f()}
 
@@ -631,10 +647,10 @@ async function vPpl(){
     $('#l').innerHTML=a.filter(o=>(!q||String(o.name).includes(q)||String(o.school).includes(q))&&(!sc||(sc=='__none'?!o.school:o.school==sc))&&(!b||String(o.birth).slice(5,7)==mo))
     .sort((x,y)=>b?String(x.birth).slice(8)-String(y.birth).slice(8):0)
     .map(o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)} ${esc(o.grade)}</small><br><small>${o.school?esc(o.school)+' · ':''}${o.birth?'생일 '+(+String(o.birth).slice(5,7))+'월 '+(+String(o.birth).slice(8,10))+'일 ':''}${esc(o.note)}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`).join('')||'<p>해당하는 학생이 없습니다.</p>'};
-  const load=()=>run(async()=>{a=await call('people',{bu:buVal()});
+  const load=()=>run(async()=>{const bu=buVal();await swr('people','people|'+bu,bg=>call('people',{bu},bg),d=>{a=d;
     const cur=$('#sc').value,ss=[...new Set(a.map(o=>String(o.school||'').trim()).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko'));
     $('#sc').innerHTML='<option value="">전체 학교</option>'+ss.map(x=>`<option>${esc(x)}</option>`).join('')+(a.some(o=>!o.school)?'<option value="__none">학교 미입력</option>':'');
-    $('#sc').value=cur;if($('#sc').value!==cur)$('#sc').value='';f()});
+    $('#sc').value=cur;if($('#sc').value!==cur)$('#sc').value='';f()})});
   if(multi())$('#bu').onchange=load;
   $('#q').oninput=$('#b').onchange=$('#sc').onchange=f;load()}
 
