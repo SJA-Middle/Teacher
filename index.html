@@ -142,7 +142,7 @@ nav button{position:relative}.bd{position:absolute;top:2px;left:calc(50% + 6px);
 .thx span:first-child{background:linear-gradient(180deg,#fff1c4,#ffc95c);-webkit-background-clip:text;background-clip:text;color:transparent}
 #login .lc{box-shadow:0 20px 50px #0b1a4f4d;border-top:3px solid #ffd36b}
 #login button.p,#login .lc .p{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px #2563eb55}
-.nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}.nst.tc{margin-left:4px}.nnote{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:12px;white-space:pre-wrap}
+.nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}.nst.tc{margin-left:4px}.sum.nfs span{cursor:pointer;border:2px solid transparent}.sum.nfs span.on{border-color:#2563eb;background:#eff6ff}.nnote{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:12px;white-space:pre-wrap}
 .nfl{display:block;text-align:left;font-size:12px;font-weight:600;color:#64748b;margin:10px 2px 0}.nfc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.nfcam{display:block;text-align:center;box-sizing:border-box;cursor:pointer}
 .fam{border:1px solid #e2e8f0;border-radius:12px;padding:4px 8px;margin:6px 0}.fam input{margin:3px 0;padding:8px}input.unsure,select.unsure{background:#fff7d6;border-color:#f5c26b}
 #ab>div+div{margin-top:10px;padding-top:10px;border-top:1px dashed #f5c26b}
@@ -299,9 +299,12 @@ function vNf(){VG++;const m=S.nfm||'명단';
   if($('#nb')){if(S.nfb&&(U.nf.includes(S.nfb)||S.nfb=='전체'))$('#nb').value=S.nfb;$('#nb').onchange=()=>{S.nfb=$('#nb').value;vNf()}}
   run({명단:nfList,교육출석:nfAtt,등록카드:()=>nfForm(S.nfe)}[m])}
 async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
-  const r=await call('nfList'),bu=nfBu(),L=r.list.filter(o=>bu=='전체'||o.bu==bu),cnt=k=>L.filter(o=>o.st==k).length;S.nl=L;S.nall=bu=='전체';
-  a.innerHTML=`<div class="sum"><span class="a"><b>${cnt('교육중')}</b>교육 중</span><span><b style="color:#2563eb">${cnt('수료')}</b>수료</span><span class="c"><b>${cnt('배정완료')}</b>배정 완료</span></div>`+
-   `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):'<p>등록된 새친구가 없습니다.</p>')}
+  const r=await call('nfList'),bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()}
+// 위의 숫자 칸을 누르면 그 상태의 새친구만 보임 (전체를 누르면 모두)
+function nfListDraw(){const A=S.nla||[],f=S.nfst||'',L=f?A.filter(o=>o.st==f):A,cnt=k=>A.filter(o=>o.st==k).length;S.nl=L;
+  const box=(k,c,t,n)=>`<span class="${c}${f==k?' on':''}" onclick="S.nfst='${k}';nfListDraw()"><b${k=='수료'?' style="color:#2563eb"':''}>${n}</b>${t}</span>`;
+  $('#a').innerHTML=`<div class="sum nfs">${box('','','전체',A.length)}${box('교육중','a','교육 중',cnt('교육중'))}${box('수료','','수료',cnt('수료'))}${box('배정완료','c','배정 완료',cnt('배정완료'))}</div>`+
+   `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):`<p>${f?esc(f)+' 상태인 새친구가 없습니다.':'등록된 새친구가 없습니다.'}</p>`)}
 function nfCard(o,i){const cs=U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
   return `<div class="card"><b>${esc(o.name)}</b> <small>${S.nall?esc(o.bu)+' · ':''}${esc(o.school||'')} ${esc(o.grade||'')}</small> <span class="nst${sc}">${esc(o.st)}</span>${o.tch?`<span class="nst tc" style="background:${tcCol(o.tch)}">${esc(o.tch)}</span>`:''}`+
    `<p><small>교육 ${dots(o.n)} ${o.n}/${NFW}주 · 등록 ${esc(md(o.reg))}${o.guide?' · 인도 '+esc(o.guide):''}</small></p>`+
