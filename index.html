@@ -349,7 +349,7 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
    hsec('#dc2626','🐑','장기결석 현황',`연속 결석 4주 이상 ${lsT}명`,
     `<table onclick="S.adm='장기결석';go('관리')" style="cursor:pointer"><tr><th>부</th><th>4주~6개월</th><th>6개월~1년</th><th>1년 이상</th><th>합계</th></tr>`+
     L.map(o=>{const l=o.ls||[0,0,0];return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td><b>${l[0]+l[1]+l[2]}</b></td></tr>`}).join('')+`</table>`+
-    `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이번 주 새로 장기결석이 된 학생 ${F.length}명</p>`+
+    `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이번 주 새로 장기결석자가 된 학생 ${F.length}명</p>`+
     (F.length?`<div class="wks">${F.map(x=>`<span class="ok" style="background:${x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p class="hsp" style="color:#8a96ab">없습니다 🙏</p>'));
   const P=(r.reps||[]).filter(x=>x.prayer),N=(r.reps||[]).filter(x=>x.note),m=S.hm||'p',Q=m=='p'?P:N;
   h+=hsec('#7c3aed','🙏','반모임 보고서 모아보기','',
