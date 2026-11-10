@@ -38,7 +38,7 @@ input,select,textarea{width:100%;box-sizing:border-box;padding:10px;margin:4px 0
 table{width:100%;border-collapse:collapse;background:#fff}td,th{padding:6px;border-bottom:1px solid #eee;text-align:center;font-size:14px}
 tr.go td:first-child{color:#2b5fb4;font-weight:600}
 small{color:#5b6b85}
-.bar{display:flex;gap:6px}.bar>*{flex:1;min-width:0}
+.bar{display:flex;gap:6px}.flt{display:flex;gap:6px;margin:0 0 4px}.flt>*{flex:1;min-width:0;margin:4px 0}.flt input[type=month]{flex:1.3}.chips{display:flex;gap:6px;margin:6px 0 8px}.chips button{flex:1;padding:9px 4px;border-radius:12px;border:1px solid #c3d3ec;background:#fff;color:#55657f;font-size:14px;font-weight:600}.chips button.on{background:#2563eb;border-color:#2563eb;color:#fff}.bar>*{flex:1;min-width:0}
 a.back{display:inline-block;margin:6px 0;color:#2b5fb4}
 #busy{position:fixed;top:0;left:0;right:0;height:3px;background:#2b5fb4;opacity:0;transition:opacity .2s}
 #busy.on{opacity:1}
@@ -177,7 +177,7 @@ const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><pat
 const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin||U.mgr)t.push('관리');return t};
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){VG++;const m=S.adm||'보고서미제출';
-  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${k}</button>`).join('')}</div><div id="a"></div>`;
+  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
@@ -223,11 +223,17 @@ function chart(p){const W=340,Hh=190,L=32,R=12,T0=16,B=26,iw=W-L-R,ih=Hh-T0-B,n=
   p.forEach((o,i)=>{if(o.r!=null){s+=`<circle cx="${x(i)}" cy="${y(o.r)}" r="3.5" fill="#2563eb"/>`;if(n<=14)s+=`<text x="${x(i)}" y="${y(o.r)-8}" font-size="9" text-anchor="middle" fill="#1e3a8a" font-weight="700">${o.r}</text>`}
     if(n<=13||i%Math.ceil(n/12)==0)s+=`<text x="${x(i)}" y="${Hh-8}" font-size="9" text-anchor="middle" fill="#94a3b8">${md(o.d)}</text>`});
   return s+'</svg>'}
-function aTrend(){$('#a').innerHTML=`<select id="n"><option value="8">최근 8주</option><option value="12" selected>최근 12주</option><option value="26">최근 26주</option><option value="52">최근 52주</option></select><select id="tb">${opts(['전체',...U.bus])}</select><div id="l">불러오는 중…</div>`;
-  const f=()=>run(async()=>{const r=await call('trend',{weeks:+$('#n').value}),b=$('#tb').value;
-    const p=r.map(w=>{const o=b=='전체'?w:(w.bu[b]||{a:0,b:0}),n=o.a+o.b;return{d:w.date,a:o.a,b:o.b,r:n?Math.round(o.a/n*100):null}});
-    $('#l').innerHTML=chart(p)+`<table><tr><th>주일</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+p.slice().reverse().map(o=>`<tr><td>${md(o.d)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.r==null?'-':o.r+'%'}</td></tr>`).join('')+`</table>`});
-  $('#n').onchange=$('#tb').onchange=f;f()}
+function aTrend(){$('#a').innerHTML=`<div class="flt"><select id="n"><option value="8">최근 8주</option><option value="12" selected>최근 12주</option><option value="26">최근 26주</option><option value="52">최근 52주</option></select><select id="tb">${opts(['전체',...U.bus])}</select><select id="tg">${opts(['전체 학년','1학년','2학년','3학년','기타'])}</select></div><div id="l">불러오는 중…</div>`;
+  if(S.tg)$('#tg').value=S.tg;
+  // 한 주의 출석·결석: 부와 학년을 골라서 합침 (학년 정보가 없는 예전 서버 응답이면 부 기준)
+  const pick=(w,b,g)=>{if(g=='전체 학년')return b=='전체'?w:(w.bu[b]||{a:0,b:0});const o={a:0,b:0};Object.keys(w.gr||{}).forEach(k=>{const [B,G]=k.split('|');if(G==g&&(b=='전체'||B==b)){o.a+=w.gr[k].a;o.b+=w.gr[k].b}});return o};
+  const f=()=>run(async()=>{S.tg=$('#tg').value;const r=S.trw==$('#n').value&&S.trr?S.trr:await call('trend',{weeks:+$('#n').value}),b=$('#tb').value,g=$('#tg').value;S.trr=r;S.trw=$('#n').value;
+    const p=r.map(w=>{const o=pick(w,b,g),n=o.a+o.b;return{d:w.date,a:o.a,b:o.b,r:n?Math.round(o.a/n*100):null}});
+    // 기간 평균 학년별 비교 (고른 부 기준)
+    const avg=G=>{let a=0,n=0;r.forEach(w=>{const o=pick(w,b,G);a+=o.a;n+=o.a+o.b});return n?Math.round(a/n*100):null};
+    const cmp=r.some(w=>w.gr)?`<div class="sum">${['1학년','2학년','3학년'].map(G=>{const v=avg(G);return`<span style="cursor:pointer${G==g?';outline:2px solid #2563eb':''}" onclick="$('#tg').value='${G}';$('#tg').onchange()"><b style="color:#2563eb">${v==null?'-':v+'%'}</b>${G} 평균</span>`}).join('')}</div>`:'';
+    $('#l').innerHTML=cmp+chart(p)+`<table><tr><th>주일</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+p.slice().reverse().map(o=>`<tr><td>${md(o.d)}</td><td>${o.a}</td><td>${o.b}</td><td>${o.r==null?'-':o.r+'%'}</td></tr>`).join('')+`</table>`});
+  $('#n').onchange=()=>{S.trr=null;f()};$('#tb').onchange=$('#tg').onchange=f;S.trr=null;f()}
 function aVisit(){$('#a').innerHTML=`<div class="card"><b>심방 기록 남기기</b><input id="vq" placeholder="학생 이름 검색"><select id="vs"></select><input type="date" id="vd" value="${nowIso()}"><textarea id="vn" rows="3" placeholder="심방 내용 (방문·통화·만남 등)"></textarea><button class="p" onclick="run(visitSave)">저장</button></div><div id="l">불러오는 중…</div>`;
   run(async()=>{const [pp,lg]=await Promise.all([S.pp||call('people',{bu:'전체'}),call('careLog',{})]);S.pp=pp;
     const fl=()=>{const q=$('#vq').value.trim();$('#vs').innerHTML=pp.filter(o=>!q||String(o.name).includes(q)).slice(0,60).map(o=>`<option value="${esc(o.id)}">${esc(o.name)} · ${esc(o.cls)}</option>`).join('')||'<option value="">검색 결과 없음</option>'};
@@ -533,7 +539,7 @@ const buVal=()=>multi()?$('#bu').value:'';
 
 async function vAtt(){
   if(!U.classes.length){$('#v').innerHTML='<p>등록된 반이 없습니다. 명단을 먼저 올려 주세요.</p>';return}
-  $('#v').innerHTML=`<div class="wk"><button class="wb" id="pw">‹</button><select id="d">${sunOpts(D)}</select><button class="wb" id="nw">›</button></div>${buSel(false)}<select id="c"></select><div id="l">불러오는 중…</div>`;
+  $('#v').innerHTML=`<div class="wk"><button class="wb" id="pw">‹</button><select id="d">${sunOpts(D)}</select><button class="wb" id="nw">›</button></div><div class="flt">${buSel(false)}<select id="c"></select></div><div id="l">불러오는 중…</div>`;
   const fill=()=>{$('#c').innerHTML=opts(clsFor(buVal()))};
   if(multi()&&S.bu)$('#bu').value=S.bu;
   fill();if(S.cls&&clsFor(buVal()).includes(S.cls))$('#c').value=S.cls;
@@ -572,7 +578,7 @@ async function save(){const un=S.r.students.filter(s=>!S.st[s.id]).length;
   toast('저장되었습니다');try{localStorage.removeItem('ld|'+D+'|'+S.cls)}catch(e){}await loadAtt()}
 
 async function vStat(){
-  $('#v').innerHTML=`<input type="month" id="m" value="${nowIso().slice(0,7)}">${buSel(true)}<select id="c"></select><div id="l">불러오는 중…</div>`;
+  $('#v').innerHTML=`<div class="flt"><input type="month" id="m" value="${nowIso().slice(0,7)}">${buSel(true)}<select id="c"></select></div><div id="l">불러오는 중…</div>`;
   const fill=()=>{$('#c').innerHTML=opts(['전체',...clsFor(buVal())])};fill();
   const f=()=>run(async()=>{const a=await call('stats',{month:$('#m').value,bu:buVal(),cls:$('#c').value});
     $('#l').innerHTML=(a.length?`<table><tr><th>이름</th><th>반</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+
@@ -592,17 +598,17 @@ async function repDl(i){const o=S.rp[i];if(!confirm(o.cls+' '+lbl(sun(String(o.d
   run(async()=>{await call('repDel',{date:String(o.date).slice(0,10),cls:o.cls});toast('삭제되었습니다');vRep()})}
 async function vRep(){
   const cur=sun(nowIso());
-  $('#v').innerHTML=`<select id="w" style="text-align:center;text-align-last:center;font-weight:700;color:#1d4a94;padding:12px"><option value="r4">최근 4주 모아보기</option>${sunOpts(cur)}</select>${buSel(true)}<select id="c"></select>${U.admin||U.mgr?'<select id="m"><option value="">전체 내용</option><option value="p">기도제목만 모아보기</option><option value="n">특이사항만 모아보기</option></select>':''}<div id="l">불러오는 중…</div>`;
+  $('#v').innerHTML=`<select id="w" style="text-align:center;text-align-last:center;font-weight:700;color:#1d4a94;padding:12px"><option value="r4">최근 4주 모아보기</option>${sunOpts(cur)}</select><div class="flt">${buSel(true)}<select id="c"></select></div>${U.admin||U.mgr?`<div class="chips" id="m">${[['','전체 내용'],['p','기도제목만'],['n','특이사항만']].map(([k,t])=>`<button data-k="${k}" class="${(S.rpm||'')==k?'on':''}">${t}</button>`).join('')}</div>`:''}<div id="l">불러오는 중…</div>`;
   const fill=()=>{$('#c').innerHTML=opts(['전체',...clsFor(buVal())])};fill();
   const f=()=>run(async()=>{let a=await call('reports',{...(w=>w=='r4'?{from:addd(cur,-21),to:addd(cur,6)}:{from:w,to:addd(w,6)})($('#w').value),bu:buVal(),cls:$('#c').value});
-    const md_=(U.admin||U.mgr)&&$('#m')?$('#m').value:'';if(md_)a=a.filter(o=>md_=='p'?o.prayer:o.note);
+    const md_=(U.admin||U.mgr)&&$('#m')?(S.rpm||''):'';if(md_)a=a.filter(o=>md_=='p'?o.prayer:o.note);
     S.rp=a;$('#l').innerHTML=a.length?a.map((o,i)=>md_?`<div class="card"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small><p>${br(md_=='p'?o.prayer:o.note)}</p></div>`:`<div class="card"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small>`+
       (o.att?`<p><small>출석 ${o.att['출석']} · 결석 ${o.att['결석']}</small></p>`:'')+
       (o.absent&&o.absent.length?`<p><b>결석</b> ${o.absent.map(a=>esc(a.name)+(a.reason?` (${esc(a.reason)})`:'')).join(', ')}</p>`:'')+
       (o.prayer?`<p><b>기도제목</b><br>${br(o.prayer)}</p>`:'')+(o.note?`<p><b>특이사항</b><br>${br(o.note)}</p>`:'')+
       (!o.prayer&&!o.note?'<p><small>작성된 내용이 없습니다.</small></p>':'')+(canEd(o)?`<p><button class="vb" onclick="repEd(${i})">수정</button><button class="vb dl" onclick="repDl(${i})">삭제</button></p>`:'')+`</div>`).join(''):'<p>해당 기간에 기록된 보고서가 없습니다.</p>'});
   if(multi())$('#bu').onchange=()=>{fill();f()};
-  $('#w').value=cur;$('#w').onchange=$('#c').onchange=f;if($('#m'))$('#m').onchange=f;f()}
+  $('#w').value=cur;$('#w').onchange=$('#c').onchange=f;if($('#m'))$('#m').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.rpm=b.dataset.k;$('#m').querySelectorAll('button').forEach(x=>x.className=x==b?'on':'');f()});f()}
 
 async function vCare(){$('#v').innerHTML=`<div class="card"><b>심방일지</b><input id="vq" placeholder="학생 이름 검색"><select id="vs"></select><input type="date" id="vd" value="${nowIso()}"><textarea id="vn" rows="3" placeholder="심방 내용 (방문·통화·만남 등) — 쓰려면 위에서 학생을 선택하세요"></textarea><button class="p" onclick="run(visitSave)">저장</button></div><div id="l">불러오는 중…</div>`;
   run(async()=>{const [pp,lg]=await Promise.all([call('people',{bu:'전체'}),call('careLog',{})]);S.pp=pp;S.lg=lg;
