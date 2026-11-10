@@ -353,7 +353,8 @@ function shrink(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(f
   im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('사진을 열 수 없습니다. 다시 찍어 주세요.'))};im.src=u})}
 async function nfPic(inp){const f=inp.files&&inp.files[0];if(!f)return;const m=$('#ocm');m.textContent='사진을 읽는 중… (10초 정도 걸려요)';
   try{const r=await call('nfOcr',{img:await shrink(f)});S.nph=r.photo||'';
-    if(r.f){const x=r.f,set=(k,v)=>{if(v&&$('#nf_'+k))$('#nf_'+k).value=v};
+    let pf=r.f;if(r.w&&r.w.length){try{pf=nfParseW(r.w)}catch(e){console.error(e)}}   // 서버가 원본을 보내면 앱의 최신 규칙으로 읽음
+    if(pf){const x=pf,set=(k,v)=>{if(v&&$('#nf_'+k))$('#nf_'+k).value=v};
       set('이름',x.name);set('생년월일',x.birth);set('등록신청일',x.reg);if(x.bu&&$('#nf_bu')&&U.nf.includes(x.bu))$('#nf_bu').value=x.bu;set('학년',x.grade);set('학교',x.school);set('학생연락처',x.tel);set('보호자연락처',x.ptel);set('주소',x.addr);set('이전교회',x.prev);set('인도자',x.guide);
       if(x.fam&&x.fam.length)$('#fams').innerHTML=x.fam.map(nfFam).join('');
       S.nun=x.unsure||[];document.querySelectorAll('#a .unsure').forEach(e=>e.classList.remove('unsure'));S.nun.forEach(k=>{const e=$('#nf_'+k);if(e)e.classList.add('unsure')});
@@ -368,6 +369,136 @@ async function nfSave(){const f={};NFF.forEach(([k])=>f[k]=$('#nf_'+k).value);NF
   await call('nfSave',{id:S.nr.id||'',bu,f,fam,photo:S.nph||''});toast('저장되었습니다');S.nfb=bu;S.nfm='명단';S.nfe=null;vNf()}
 function nfDel(){const r=S.nr;if(!confirm(r['이름']+' 새친구 카드를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.'))return;
   run(async()=>{await call('nfDel',{id:r.id});toast('삭제되었습니다');S.nfm='명단';S.nfe=null;vNf()})}
+// ===== 등록카드 사진 인식 규칙 (서버가 보내준 글자+위치로 앱에서 직접 칸을 나눔 → 규칙을 고쳐도 서버 배포가 필요 없음) =====
+const nfTel_ = v => { const d = String(v || '').replace(/\D/g, ''); return d.length === 11 ? d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') : d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3') : String(v || '').trim(); };
+// ===== Cloud Vision 결과(글자 + 위치)를 등록카드 칸에 맞춰 나눔 =====
+// 1) 인쇄된 칸 이름(부모번호·소속학교·인도자 …)을 찾아, 표준 양식 좌표와 사진 좌표 사이의 변환(회전·크기·기울기)을 계산
+// 2) 모든 글자를 표준 양식 좌표로 옮긴 뒤, 각 칸 이름의 오른쪽에 쓴 손글씨를 그 칸의 값으로 봄
+const NFT_ = {   // 표준 양식에서 칸 이름의 위치 (가로 1512 기준)
+  '이름': [155, 268], '생년월일': [822, 262], '번호': [155, 378], '부모번호': [827, 372], '주소': [155, 487],
+  '신앙생활': [152, 597], '신급': [828, 588], '이전교회': [152, 707], '소속학교': [830, 705], '인도자': [152, 818],
+  '전화번호': [870, 968], '직분': [1065, 968], '섬기는': [1245, 966] };
+const NFU_ = ['부모번호', '소속학교', '신앙생활', '이전교회', '인도자', '주소', '신급', '전화번호', '직분', '섬기는'];   // 한 번만 나오는 칸 이름
+function nfParse_(r) {
+  const f = { unsure: [] };
+  // --- 글자 목록 (단어 + 바로 이어지는 2~3단어 묶음: 칸 이름이 둘로 나뉘어 읽힌 경우 대비)
+  const W = [], C = [];
+  ((r.fullTextAnnotation || {}).pages || []).forEach(pg => (pg.blocks || []).forEach(b => (b.paragraphs || []).forEach(pa => {
+    const ws = [];
+    (pa.words || []).forEach(w => {
+      const t = (w.symbols || []).map(s => s.text).join(''), v = ((w.boundingBox || {}).vertices || []);
+      if (!t || v.length < 4) return;
+      const xs = v.map(q => q.x || 0), ys = v.map(q => q.y || 0);
+      const o = { t, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+      o.x = (o.x0 + o.x1) / 2; o.y = (o.y0 + o.y1) / 2; W.push(o); ws.push(o);
+    });
+    ws.forEach((o, i) => { C.push(o); for (let k = 2; k <= 3 && i + k <= ws.length; k++) { const g = ws.slice(i, i + k);
+      C.push({ t: g.map(x => x.t).join(''), x: (Math.min(...g.map(x => x.x0)) + Math.max(...g.map(x => x.x1))) / 2, y: (Math.min(...g.map(x => x.y0)) + Math.max(...g.map(x => x.y1))) / 2, parts: g }); } });
+  })));
+  const norm = t => String(t).replace(/[\s:：*,.!]/g, '');
+  const cand = {}; Object.keys(NFT_).forEach(k => cand[k] = C.filter(c => norm(c.t) === k));
+  // --- 변환 계산: 한 번만 나오는 칸 이름 두 개로 후보 변환을 만들고, 가장 많은 칸 이름이 맞는 것을 고름
+  const cx = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cdiv = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  const pts = []; NFU_.forEach(k => cand[k].forEach(c => pts.push({ k, c })));
+  let best = null;
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+    const p = pts[i], q = pts[j]; if (p.k === q.k) continue;
+    const tp = NFT_[p.k], tq = NFT_[q.k];
+    const a = cdiv([q.c.x - p.c.x, q.c.y - p.c.y], [tq[0] - tp[0], tq[1] - tp[1]]), s = Math.hypot(a[0], a[1]);
+    if (s < 0.2 || s > 6) continue;
+    const t = [p.c.x - cx(a, tp)[0], p.c.y - cx(a, tp)[1]];
+    const map = w => { const z = cx(a, w); return [z[0] + t[0], z[1] + t[1]]; };
+    const tol = 60 * s, inl = [];
+    Object.keys(NFT_).forEach(k => { let bb = null, bd = tol; cand[k].forEach(c => { const m = map(NFT_[k]), d = Math.hypot(c.x - m[0], c.y - m[1]); if (d < bd) { bd = d; bb = c; } }); if (bb) inl.push({ k, c: bb }); });
+    if (!best || inl.length > best.inl.length) best = { a, t, s, inl };
+  }
+  if (!best || best.inl.length < 3) { f.unsure.push('이름', '학생연락처', '보호자연락처', '학교'); return f; }
+  // --- 맞는 칸 이름이 3개 이상이면 기울기까지 반영하는 변환(아핀)으로 다듬음
+  const fit = inl => {
+    const n = inl.length; let S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], bx = [0, 0, 0], by = [0, 0, 0];
+    inl.forEach(({ k, c }) => { const u = NFT_[k][0], v = NFT_[k][1], row = [u, v, 1];
+      for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) S[i][j] += row[i] * row[j]; bx[i] += row[i] * c.x; by[i] += row[i] * c.y; } });
+    const det3 = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+    const D = det3(S); if (Math.abs(D) < 1e-6) return null;
+    const solve = b => [0, 1, 2].map(i => det3(S.map((r, ri) => r.map((v, ci) => ci === i ? b[ri] : v))) / D);
+    return [solve(bx), solve(by)];
+  };
+  let A = best.inl.length >= 4 ? fit(best.inl) : null, toT;
+  if (A) {   // 사진 좌표 → 표준 양식 좌표 (아핀 역변환)
+    const [[a, b, c], [d, e, g]] = A, det = a * e - b * d;
+    toT = (x, y) => [(e * (x - c) - b * (y - g)) / det, (a * (y - g) - d * (x - c)) / det];
+    const sc = Math.sqrt(Math.abs(det)); if (sc < 0.15 || sc > 8) A = null; else best.s = sc;
+  }
+  if (!A) toT = (x, y) => cdiv([x - best.t[0], y - best.t[1]], best.a);
+  W.forEach(w => { const p = toT(w.x, w.y); w.u = p[0]; w.v = p[1]; w.hw = (w.x1 - w.x0) / 2 / best.s; });
+  // 칸 이름 위치(표준 좌표): 찾은 것은 실제 위치, 못 찾은 것은 표준 위치
+  const L = {}; Object.keys(NFT_).forEach(k => { const hit = best.inl.find(x => x.k === k); if (hit) { const p = toT(hit.c.x, hit.c.y); L[k] = { u: p[0], v: p[1] }; } else L[k] = { u: NFT_[k][0], v: NFT_[k][1] }; });
+  const labelWords = new Set(); best.inl.forEach(x => (x.c.parts || [x.c]).forEach(w => labelWords.add(w)));
+  const NOTE = /^\*?(이름|연락처|본인과|관계를|적어주세요)[,!]*$/;
+  const PRINT = /^(남|여|남\/여|\/|방문|등록|기타|세례|입교|학습|유아세례|년|월|일|세|\(|\))$/;
+  // 칸 이름 오른쪽(같은 줄)의 손글씨: u는 [시작, 끝], v는 칸 이름 줄 ±55
+  const grab = (k, uTo, extra) => { const l = L[k];
+    return W.filter(w => !labelWords.has(w) && w.u - w.hw > l.u + 55 && w.u < uTo && Math.abs(w.v - l.v) < 56 && !PRINT.test(w.t) && !(extra && extra(w)))
+      .sort((p, q) => (Math.abs(p.v - q.v) > 30 ? p.v - q.v : p.u - q.u)).map(w => w.t).join(' ').trim(); };
+  const midU = (L['생년월일'].u + L['이름'].u) / 2 + 220;   // 왼쪽 칸과 오른쪽 칸의 경계 (오른쪽 칸 이름 바로 앞)
+  const leftEnd = k => L[k].u - 75;
+  const tel = s => { const d = String(s).split(/\s+/).filter(t => /^[\d\-oOlI.()모부]+$/.test(t) && /\d/.test(t)).join('').replace(/[oO]/g, '0').replace(/[lI]/g, '1').replace(/\D/g, '');
+    const m = d.match(/01\d{8,9}/); return m ? nfTel_(m[0]) : ''; };
+  f.name = grab('이름', leftEnd('생년월일') - 140).replace(/[^가-힣a-zA-Z]/g, '');   // 오른쪽의 '남 / 여' 인쇄 글자 앞까지
+  const bt = grab('생년월일', 1600);
+  const nums = (bt.split(/세|\(/)[0].match(/\d+/g) || []);
+  if (nums.length >= 3) {
+    let i = 0, y = nums[0];
+    if (y.length === 2 && nums[1] && nums[1].length <= 2 && nums.length >= 4) { y = (y === '20' || y === '19') ? y + ('0' + nums[1]).slice(-2) : y; i = 2; } else { y = y.length === 2 ? ((+y > 40 ? '19' : '20') + y) : y; i = 1; }
+    const dt = y + '-' + ('0' + nums[i]).slice(-2) + '-' + ('0' + nums[i + 1]).slice(-2);
+    if (/^(19|20)\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dt)) f.birth = dt;
+  }
+  if (!f.birth && bt) f.unsure.push('생년월일');
+  const gw = W.find(w => /^중\s*[123]$/.test(w.t) && w.u > L['생년월일'].u && w.v < L['번호'].v), gm = (gw ? gw.t : bt).match(/중\s*([123])/); if (gm) f.grade = gm[1] + '학년';   // 카드에 '중3'처럼 적혀 있으면 그대로
+  if (f.birth && !f.grade) { const n = new Date(), sy = n.getMonth() >= 2 ? n.getFullYear() : n.getFullYear() - 1, g = sy - +f.birth.slice(0, 4) - 12; if (g >= 1 && g <= 3) f.grade = g + '학년'; }   // 생년으로 중학교 학년 계산
+  const tRaw = grab('번호', leftEnd('부모번호')), pRaw = grab('부모번호', 1600);
+  f.tel = tel(tRaw); if (!f.tel && tRaw) f.unsure.push('학생연락처');
+  f.ptel = tel(pRaw); if (!f.ptel && pRaw) f.unsure.push('보호자연락처');
+  f.addr = grab('주소', 1600);
+  f.school = grab('소속학교', 1600).replace(/\s+/g, '');
+  f.prev = grab('이전교회', leftEnd('소속학교'));
+  f.guide = grab('인도자', 1600, w => NOTE.test(w.t));
+  // 부서명(예: '열린' → 3부)과 등록신청일: 칸 이름 오른쪽의 글자
+  const near = (re, du, dv) => { const lab = W.find(w => re.test(norm(w.t))); if (!lab) return '';
+    return W.filter(w => w !== lab && w.u > lab.u && w.u < lab.u + du && Math.abs(w.v - lab.v) < dv).sort((p, q) => p.u - q.u).map(w => w.t).join(' '); };
+  const bu = near(/^부서명$/, 500, 70);
+  f.bu = /열린|3\s*부/.test(bu) ? '3부' : /2\s*부/.test(bu) ? '2부' : /1\s*부/.test(bu) ? '1부' : '';
+  const rd = (near(/^등록신청일$/, 650, 80).match(/\d+/g) || []).filter(x => x !== '20');
+  if (rd.length >= 3) { const yy = rd[rd.length - 3], mm = rd[rd.length - 2], dd = rd[rd.length - 1], y4 = yy.length === 4 ? yy : '20' + ('0' + yy).slice(-2);
+    const dt = y4 + '-' + ('0' + mm).slice(-2) + '-' + ('0' + dd).slice(-2); if (/^20\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dt)) f.reg = dt; }
+  // --- 가족 표: 머리글(전화번호·직분·섬기는 교회) 아래, 관계·이름 칸 글자로 줄을 나누고 각 글자를 가장 가까운 머리글 칸에 넣음
+  f.fam = [];
+  const hv = L['전화번호'].v, hu = L['전화번호'].u, sc = (L['직분'].u - hu) / (1065 - 870) || 1;   // 표 머리글 기준 (표 폭 비율)
+  const colU = { rel: hu - 720 * sc, name: hu - 490 * sc, birth: hu - 227 * sc, tel: hu, role: L['직분'].u, church: L['섬기는'].u + 45 * sc };
+  const foot = W.filter(w => w.v > hv + 60 && /드림공동체|부모님께|개인정보|등록신청일/.test(w.t)).reduce((m, w) => Math.min(m, w.v), hv + 800);
+  const T = W.filter(w => !labelWords.has(w) && w.v > hv + 55 && w.v < foot - 25 && w.u > colU.rel - 120 && w.u < colU.church + 220 && !/^(가족|관계|이름|생년월일|교회)$/.test(w.t));
+  const colOf = w => { let k = 'rel', bd = Infinity; const num = /^[\d\-.\/?()]+$/.test(w.t);   // 숫자 조각은 생년월일·전화번호 칸에만
+    Object.keys(colU).filter(c => !num || c === 'birth' || c === 'tel').forEach(c => { const d = Math.abs(w.u - colU[c]); if (d < bd) { bd = d; k = c; } }); return k; };
+  T.forEach(w => w.col = colOf(w));
+  const seeds = T.filter(w => w.col === 'rel' || w.col === 'name').map(w => w.v).sort((a, b) => a - b), rows = [];
+  seeds.forEach(v => { const g = rows[rows.length - 1]; if (g && v - g.v1 < 60) { g.v1 = v; g.s.push(v); } else rows.push({ v1: v, s: [v] }); });
+  rows.forEach(g => g.c = g.s.reduce((a, b) => a + b, 0) / g.s.length);
+  rows.forEach(g => {
+    const e = {};
+    T.filter(w => { let bi = -1, bd = Infinity; rows.forEach((h, i) => { const d = Math.abs(w.v - h.c); if (d < bd) { bd = d; bi = i; } }); return rows[bi] === g && bd < 85; })
+      .sort((p, q) => (Math.abs(p.v - q.v) > 25 ? p.v - q.v : p.u - q.u)).forEach(w => { e[w.col] = ((e[w.col] || '') + (w.col === 'tel' || w.col === 'birth' ? '' : ' ') + w.t).trim(); });
+    if (e.tel) e.tel = tel(e.tel) || e.tel;
+    if (e.church && /^[xX×]$/.test(e.church)) e.church = '';
+    if (e.name) e.name = e.name.replace(/\s+/g, '');
+    if (e.rel || e.name) f.fam.push({ rel: e.rel || '', name: e.name || '', birth: e.birth || '', tel: e.tel || '', role: e.role || '', church: (e.church || '').replace(/\s+/g, '') });
+  });
+  ['name', 'tel', 'ptel', 'school'].forEach(k => { if (!f[k]) f.unsure.push({ name: '이름', tel: '학생연락처', ptel: '보호자연락처', school: '학교' }[k]); });
+  return f;
+}
+// 서버의 [글자, x0, y0, x1, y1, 문단번호] 목록을 Vision 응답 모양으로 되돌려 nfParse_에 넘김
+function nfParseW(w){const P={};w.forEach(([t,x0,y0,x1,y1,pi])=>{(P[pi]=P[pi]||[]).push({symbols:[...String(t)].map(c=>({text:c})),boundingBox:{vertices:[{x:x0,y:y0},{x:x1,y:y0},{x:x1,y:y1},{x:x0,y:y1}]}})});
+  return nfParse_({fullTextAnnotation:{pages:[{blocks:[{paragraphs:Object.keys(P).sort((a,b)=>a-b).map(k=>({words:P[k]}))}]}]}})}
 // 배너 (장기결석 알림 · 새친구 배정 알림을 함께 표시)
 function abSet(id,h){let e=document.getElementById(id);if(!h){if(e)e.remove();return}if(!e){e=document.createElement('div');e.id=id;$('#ab').appendChild(e)}e.innerHTML=h}
 async function ackNf(){try{await call('noticeAck',{},1);abSet('ab2','')}catch(e){toast('처리하지 못했습니다')}}
