@@ -1,5 +1,5 @@
 // 화면 파일만 저장해 두는 서비스워커. 출석 데이터(구글 시트 요청)는 절대 저장하지 않고 항상 새로 불러옵니다.
-const CACHE = 'attendance-v57';
+const CACHE = 'attendance-v58';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const IMGS = ['./logo.png', './church.png', './jungdeung.png', './lead.png'];   // 로고·사진: 저장본을 바로 보여주고 뒤에서 새로 받아 둠
 
