@@ -323,6 +323,12 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
    `<p style="margin:0 2px 4px;font-size:14px;color:#475569">출석률 <b>${R==null?'-':R+'%'}</b> · 지난주 ${R0==null?'-':R0+'%'} ${R!=null&&R0!=null?dlt(R-R0,'%p'):''}</p>`+
    `<table><tr><th>부</th><th>재적</th><th>교사</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+
    L.map(o=>{const x=rt(o.a,o.b),y=rt(o.a0,o.b0);return`<tr><td><b>${esc(o.bu)}</b></td><td>${o.stu}</td><td>${o.tch}</td><td>${o.a} ${dlt(o.a-o.a0)}</td><td>${o.b}</td><td>${x==null?'-':x+'%'}${x!=null&&y!=null?' '+dlt(x-y):''}</td></tr>`}).join('')+`</table>`+
+   // 장기결석: 부별 단계 수 + 이 주일에 새로 4주·6개월·1년이 된 학생 이름
+   `<div class="hh">장기결석 현황<small>연속 결석 4주 이상 ${L.reduce((x,o)=>x+(o.ls?o.ls[0]+o.ls[1]+o.ls[2]:0),0)}명</small></div>`+
+   `<table onclick="S.adm='장기결석';go('관리')" style="cursor:pointer"><tr><th>부</th><th>4주~6개월</th><th>6개월~1년</th><th>1년 이상</th><th>합계</th></tr>`+
+   L.map(o=>{const l=o.ls||[0,0,0];return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td><b>${l[0]+l[1]+l[2]}</b></td></tr>`}).join('')+`</table>`+
+   `<p style="margin:8px 2px 2px;font-size:13px;font-weight:700;color:#be123c">이 주일 새로 장기결석이 된 학생 ${(r.fresh||[]).length}명</p>`+
+   ((r.fresh||[]).length?`<div class="wks">${r.fresh.map(x=>`<span class="ok" style="background:${x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p style="margin:0 2px;font-size:13px;color:#8a96ab">없습니다 🙏</p>')+
    `<div class="hh">새친구 현황<small>이번 주 교육출석 ${nfs('wk')}명</small></div>`+
    `<table onclick="go('새친구')" style="cursor:pointer"><tr><th>부</th><th>교육 중</th><th>반배정 대기</th><th>배정 완료</th><th>교육출석</th></tr>`+
    L.map(o=>`<tr><td><b>${esc(o.bu)}</b></td><td>${o.nf['교육중']}</td><td>${o.nf['수료']?`<b class="dn">${o.nf['수료']}</b>`:0}</td><td>${o.nf['배정완료']}</td><td>${o.nf.wk}</td></tr>`).join('')+`</table>`;
