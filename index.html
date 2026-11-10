@@ -177,7 +177,7 @@ const ic={'출석':'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><pat
 const TT=()=>{const t=[...T];if(U.nf&&U.nf.length)t.push('새친구');if(U.admin||U.mgr)t.push('관리');return t};
 ic['관리']='<svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.7 8 9 4.6-1.3 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
 function vAdm(){VG++;const m=S.adm||'보고서미제출';
-  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
+  $('#v').innerHTML=`<div class="seg adm">${['보고서미제출','장기결석','보고서요약','전체출석율','심방기록'].concat(U.admin?['교사명단']:[]).map(k=>`<button class="${k==m?'sel':''}" onclick="S.adm='${k}';vAdm()">${{보고서미제출:'보고서<br>미제출',장기결석:'장기<br>결석',보고서요약:'보고서<br>요약',전체출석율:'전체<br>출석율',심방기록:'심방<br>기록',교사명단:'교사<br>명단'}[k]||k}</button>`).join('')}</div><div id="a"></div>`;
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,심방기록:aVisit,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
