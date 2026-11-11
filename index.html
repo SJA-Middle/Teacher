@@ -194,9 +194,9 @@ function vAdm(){VG++;if(S.adm=='심방기록')S.adm='';const m=S.adm||'보고서
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
   try{await swr('tchList','tchList',bg=>call('tchList',{},bg),r=>{S.tl=r;
-    a.innerHTML=r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.init?'아직 PIN 미설정(000000)':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
+    a.innerHTML=r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.locked?'<b style="color:#d9473f">🔒 잠김 · PIN 초기화로 해제</b>':o.init?'PIN 재설정 필요':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
   catch(e){a.innerHTML='<p>'+esc(e.message)+'</p>'}}
-function pinRs(i){const o=S.tl[i];if(!confirm(o.name+' 선생님의 PIN을 000000으로 초기화할까요?\n다음 로그인 때 새 PIN을 정하게 됩니다.'))return;
+function pinRs(i){const o=S.tl[i];if(!confirm(o.name+' 선생님의 PIN을 000000으로 초기화할까요?\n잠금이 풀리고, 다음 로그인 때 새 PIN(6자리)을 정하게 됩니다.'))return;
   run(async()=>{await call('pinReset',{name:o.name});toast('초기화되었습니다');aTch()})}
 function aMiss(){$('#a').innerHTML=`<select id="w">${sunOpts(D)}</select><div id="l">불러오는 중…</div>`;
   const f=()=>run(async()=>{const q={date:$('#w').value};await swr('week','week|'+q.date,bg=>call('week',q,bg),r=>{const no=r.list.filter(x=>!x.done),ok=r.list.filter(x=>x.done);
@@ -292,10 +292,10 @@ function keep(){const tk=U.tk;delete U.tk;if(tk)P={n:P.n,tk};try{localStorage.se
 async function login(){P={n:$('#n').value.trim(),p:$('#p').value};
   try{U=await call('login');if(U.must){showSetPin();return}keep()}catch(e){$('#err').textContent=e.message;return}
   $('#p').value='';enter()}
-// 임시 PIN(000000)으로 처음 로그인하면 나만의 PIN을 정하게 함
-function showSetPin(){$('#login .lc').innerHTML=`<h2>나만의 PIN 정하기</h2><p class="sub">처음 오셨네요! 앞으로 쓸 PIN(숫자 4~6자리)을 정해 주세요.</p><input id="np" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN (숫자 4~6자리)" autocomplete="new-password"><input id="np2" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN 한 번 더" autocomplete="new-password"><button class="p" onclick="setPin()">PIN 저장하고 시작하기</button><div id="err" style="color:#d9473f"></div>`;$('#np').focus()}
+// 임시 PIN(000000)이나 예전 짧은 PIN으로 로그인하면 새 6자리 PIN을 정하게 함
+function showSetPin(){$('#login .lc').innerHTML=`<h2>나만의 PIN 정하기</h2><p class="sub">보안을 위해 앞으로 쓸 PIN(숫자 6자리)을 정해 주세요.</p><input id="np" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN (숫자 6자리)" autocomplete="new-password"><input id="np2" type="password" inputmode="numeric" maxlength="6" placeholder="새 PIN 한 번 더" autocomplete="new-password"><button class="p" onclick="setPin()">PIN 저장하고 시작하기</button><div id="err" style="color:#d9473f"></div>`;$('#np').focus()}
 async function setPin(){const a=$('#np').value.trim(),b=$('#np2').value.trim(),e=$('#err');
-  if(!/^\d{4,6}$/.test(a)){e.textContent='PIN은 숫자 4~6자리로 입력해 주세요.';return}
+  if(!/^\d{6}$/.test(a)){e.textContent='PIN은 숫자 6자리로 입력해 주세요.';return}
   if(a==='000000'){e.textContent='000000은 사용할 수 없습니다. 다른 숫자로 정해 주세요.';return}
   if(a!==b){e.textContent='두 번 입력한 PIN이 서로 달라요.';return}
   try{await call('setPin',{pin:a});P={n:P.n,p:a};U=await call('login');keep()}catch(x){e.textContent=x.message;return}
