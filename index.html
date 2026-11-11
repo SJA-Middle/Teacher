@@ -148,7 +148,7 @@ a.tl{display:inline-flex;align-items:center;gap:5px;margin:6px 6px 0 0;padding:5
 .row.so{box-shadow:inset 4px 0 0 #22c55e,0 1px 2px #0f172a0a,0 6px 16px #2563eb14}.row.sx{box-shadow:inset 4px 0 0 #ef4444,0 1px 2px #0f172a0a,0 6px 16px #2563eb14}
 .rc{border-top:4px solid #93c5fd}.rc .rh{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:13px;color:#475569}.rc .rh .meter{flex:1;margin:0;height:7px}.rc .rh b{color:#1e3a6e}
 .rc .lb{display:inline-block;margin:10px 0 3px;padding:2px 9px;border-radius:8px;font-size:12px;font-weight:700}.lb.lp{background:#f3e8ff;color:#7c3aed}.lb.ln{background:#ffedd5;color:#c2410c}.lb.lx{background:#fee2e2;color:#b91c1c}.rc p.tx{margin:0;white-space:pre-wrap;font-size:14px;color:#334155}
-.abs{display:flex;flex-wrap:wrap;gap:4px}.abs span{font-size:12.5px;padding:3px 9px;border-radius:9px;background:#fef2f2;color:#b91c1c}.abs span small{color:#9f6b6b}
+.abs{display:flex;flex-wrap:wrap;gap:4px}.abs span{font-size:12.5px;padding:3px 9px;border-radius:9px;background:#fef2f2;color:#b91c1c}.abs span small{color:#9f6b6b}.abs.nl{align-items:center;margin-top:8px}.abs.nl .lb{margin:0 2px 0 0}.abs span.po{background:#f0fdf4;color:#15803d}.lb.lo{background:#dcfce7;color:#15803d}
 .tgl{display:inline-flex;align-items:center;gap:6px;margin:4px 0 6px;padding:8px 14px;border-radius:999px;border:1px solid #c3d3ec;background:#fff;color:#55657f;font-size:14px;font-weight:600;cursor:pointer}.tgl.on{background:#fdf2f8;border-color:#f9a8d4;color:#be185d}
 .bd8{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:8px;background:#fdf2f8;color:#be185d;font-size:11px;font-weight:700}
 .rlow{color:#dc2626;font-weight:700}.ssum{margin:4px 2px 8px;font-size:13.5px;color:#475569}
@@ -212,9 +212,9 @@ function ask(i){sendTxt(reqMsg([S.mi[i]]))}
 function askAll(){sendTxt(reqMsg(S.mi))}
 async function aLong(){$('#a').innerHTML='<div id="l">불러오는 중…</div>';lgLoad()}
 function lgLoad(){$('#l').innerHTML='불러오는 중…';run(async()=>{const bu=S.lbv||'전체';await swr('care','care|'+bu,bg=>call('care',{min:4,bu},bg),d=>{S.la=d;S.lf=S.lf||0;lgR()})})}
-const LG=[['4주 ~ 6개월',o=>o.n<26],['🐑 6개월 ~ 1년',o=>o.n>=26&&o.n<52],['🐑🐑 1년 이상',o=>o.n>=52]];
+const LG=[['4주 ~ 6개월',o=>o.n<26],['🐑 6개월 ~ 1년',o=>o.n>=26&&o.n<52],['🐑🐑 1년 ~ 2년',o=>o.n>=52&&o.n<104],['🐑🐑🐑 2년 이상',o=>o.n>=104]];
 function lgR(){const a=S.la||[],F=S.lf||0,row=o=>`<div class="row"><div><b>${esc(o.name)}</b> <small>${esc(o.cls)}</small><br><small>${o.n}주 연속 결석 · 마지막 출석 ${esc(md(o.last))}${o.reason?' · 최근 사유: '+esc(o.reason):''}</small><br>${tel(o.tel,'본인')} ${tel(o.ptel,'부모')}</div></div>`;
-  const chips=['전체',...LG.map(x=>x[0].replace(/ /g,'').replace('🐑🐑','').replace('🐑',''))].map((k,i)=>`<button class="${i==F?'sel':''}" onclick="S.lf=${i};lgR()">${k}</button>`).join('');
+  const chips=['전체',...LG.map(x=>x[0].replace(/ /g,'').replace(/🐑/g,''))].map((k,i)=>`<button class="${i==F?'sel':''}" onclick="S.lf=${i};lgR()">${k}</button>`).join('');
   const bsel=multi()?`<select id="lb" onchange="S.lbv=this.value;lgLoad()">${['전체',...U.bus].map(b=>`<option${b==(S.lbv||'전체')?' selected':''}>${esc(b)}</option>`).join('')}</select>`:'';
   $('#l').innerHTML=bsel+(a.length?`<div class="seg adm">${chips}</div><p><b>${F?a.filter(LG[F-1][1]).length:a.length}명</b> <small>· 4주(1개월) 이상 연속 결석</small></p>`+LG.map(([t,f],k)=>{if(F&&F-1!==k)return'';const g=a.filter(f);return g.length?`<p style="margin:14px 0 4px"><b>${t}</b> <small>· ${g.length}명</small></p>`+g.map(row).join(''):''}).join(''):'<p>1개월 이상 연속 결석한 학생이 없습니다.</p>')}
 function sumText(r){let A=0,B=0;r.list.filter(x=>x.done).forEach(x=>{A+=x.a;B+=x.b});const n=A+B,no=r.list.filter(x=>!x.done).map(x=>x.cls);
@@ -345,12 +345,12 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
     `<div class="sum"><span class="a"><b>${nfs('교육중')}</b>교육 중</span><span class="b"><b>${nfs('수료')}</b>반배정 대기</span><span class="c"><b>${nfs('배정완료')}</b>배정 완료</span></div>`+
     `<table onclick="go('새친구')" style="cursor:pointer"><tr><th>부</th><th>교육 중</th><th>반배정 대기</th><th>배정 완료</th><th>교육출석</th></tr>`+
     L.map(o=>`<tr><td><b>${esc(o.bu)}</b></td><td>${o.nf['교육중']}</td><td>${o.nf['수료']?`<b class="dn">${o.nf['수료']}</b>`:0}</td><td>${o.nf['배정완료']}</td><td>${o.nf.wk}</td></tr>`).join('')+`</table>`)+
-   // 장기결석: 부별 단계 수 + 이 주일에 새로 4주·6개월·1년이 된 학생 이름
+   // 장기결석: 부별 단계 수 + 이번 주에 새로 4주·6개월·1년·2년이 된 학생 이름
    hsec('#dc2626','🐑','장기결석 현황',`연속 결석 4주 이상 ${lsT}명`,
-    `<table onclick="S.adm='장기결석';go('관리')" style="cursor:pointer"><tr><th>부</th><th>4주~6개월</th><th>6개월~1년</th><th>1년 이상</th><th>합계</th></tr>`+
-    L.map(o=>{const l=o.ls||[0,0,0];return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td><b>${l[0]+l[1]+l[2]}</b></td></tr>`}).join('')+`</table>`+
+    `<table onclick="S.adm='장기결석';go('관리')" style="cursor:pointer"><tr><th>부</th><th>4주~6개월</th><th>6개월~1년</th><th>1~2년</th><th>2년 이상</th><th>합계</th></tr>`+
+    L.map(o=>{const l=[0,1,2,3].map(i=>(o.ls||[])[i]||0);return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td>${l[3]}</td><td><b>${l[0]+l[1]+l[2]+l[3]}</b></td></tr>`}).join('')+`</table>`+
     `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이번 주 새로 장기결석자가 된 학생 ${F.length}명</p>`+
-    (F.length?`<div class="wks">${F.map(x=>`<span class="ok" style="background:${x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p class="hsp" style="color:#8a96ab">없습니다 🙏</p>'));
+    (F.length?`<div class="wks">${F.map(x=>`<span class="ok" style="background:${x.n>=104?'#450a0a':x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=104?'2년':x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p class="hsp" style="color:#8a96ab">없습니다 🙏</p>'));
   const P=(r.reps||[]).filter(x=>x.prayer),N=(r.reps||[]).filter(x=>x.note),m=S.hm||'p',Q=m=='p'?P:N;
   h+=hsec('#7c3aed','🙏','반모임 보고서 모아보기','',
     `<div class="chips">${[['p','기도제목 '+P.length],['n','특이사항 '+N.length]].map(([k,t])=>`<button class="${m==k?'on':''}" onclick="S.hm='${k}';hDraw()">${t}</button>`).join('')}</div>`+
@@ -634,7 +634,7 @@ async function loadAtt(){S.cls=$('#c').value;D=$('#d').value;{const e=$('#d');$(
   draw()}
 const md=d=>{if(!d||d==='-')return d||'';const y=+d.slice(0,4),c=new Date().getFullYear();return (y&&y!==c?String(y).slice(2)+'년 ':'')+(+d.slice(5,7))+'/'+(+d.slice(8,10));};
 const lg=n=>{const m=Math.floor(n*12/52),y=Math.floor(m/12),r=m%12;return '결석 '+(y>=2?'2년 이상':y===1?(r?'1년 '+r+'개월':'1년'):m+'개월');};
-const em=s=>(s.leader?' <img class="lh" src="lead.png" alt="리더">':'')+(s.n>=52?' 🐑🐑':s.n>=26?' 🐑':'');
+const em=s=>(s.leader?' <img class="lh" src="lead.png" alt="리더">':'')+(s.n>=104?' 🐑🐑🐑':s.n>=52?' 🐑🐑':s.n>=26?' 🐑':'');
 const gr=s=>/성가반/.test(S.cls)&&s.grade?`<small class="gr g${String(s.grade).replace(/\D/g,'').slice(0,1)}">${esc(String(s.grade).replace(/학년$/,''))}학년</small>`:'';
 function allP(){S.touched=true;S.r.prayer=$('#pr').value;S.r.note=$('#nt').value;S.r.students.forEach(s=>{S.st[s.id]='출석'});draw()}
 function draw(){const r=S.r;if(/성가반/.test(S.cls))r.students.sort((a,b)=>String(a.grade).localeCompare(String(b.grade),'ko'));
@@ -642,7 +642,7 @@ function draw(){const r=S.r;if(/성가반/.test(S.cls))r.students.sort((a,b)=>St
   $('#l').innerHTML=`<div class="sum"><span class="a"><b>${na}</b>출석</span><span class="b"><b>${nb}</b>결석</span><span class="c"><b>${nc}</b>미체크</span></div>${r.students.length?`<div class="prog" title="체크 진행"><i class="pa" style="width:${na/r.students.length*100}%"></i><i class="pb" style="width:${nb/r.students.length*100}%"></i></div>`:''}<button class="all" onclick="allP()">전원 출석으로 채우기</button>`+r.students.map(s=>`<div class="row${S.st[s.id]=='출석'?' so':S.st[s.id]=='결석'?' sx':''}"><b class="nm">${gr(s)}${esc(s.name)}${em(s)}${s.n>=13?'<small class="lg">'+lg(s.n)+'</small>':''}<small class="ls">${s.last?'마지막 출석 '+md(s.last):'출석 기록 없음'}</small></b><span class="seg">`+
    [['o','출석'],['x','결석']].map(([k,t])=>`<button class="${S.st[s.id]==t?k:''}" onclick="mark('${s.id}','${t}')">${t}</button>`).join('')+`</span>`+
    (S.st[s.id]=='결석'?`<input class="rs" list="rl" maxlength="100" placeholder="결석 사유 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${s.id}']=this.value">`:'')+`</div>`).join('')+
-   `<p class="lgd"><span>🐑 6개월 이상 잃은양</span><span>🐑🐑 1년 이상 잃은양</span><span><img class="lh" src="lead.png" alt=""> 유스비카 리더</span></p><datalist id="rl"><option value="몸이 아픔"><option value="가족 행사"><option value="학교 행사·시험"><option value="학원"><option value="여행"><option value="연락 안 됨"></datalist><textarea id="pr" rows="3" placeholder="기도제목" oninput="S.touched=true">${esc(r.prayer)}</textarea><textarea id="nt" rows="3" placeholder="반 특이사항" oninput="S.touched=true">${esc(r.note)}</textarea><button class="p" id="sv" onclick="run(save)"${S.fresh?'':' disabled'}>${S.fresh?'저장':'불러오는 중…'}</button>`}
+   `<p class="lgd"><span>🐑 6개월 이상 잃은양</span><span>🐑🐑 1년 이상 잃은양</span><span>🐑🐑🐑 2년 이상 잃은양</span><span><img class="lh" src="lead.png" alt=""> 유스비카 리더</span></p><datalist id="rl"><option value="몸이 아픔"><option value="가족 행사"><option value="학교 행사·시험"><option value="학원"><option value="여행"><option value="연락 안 됨"></datalist><textarea id="pr" rows="3" placeholder="기도제목" oninput="S.touched=true">${esc(r.prayer)}</textarea><textarea id="nt" rows="3" placeholder="반 특이사항" oninput="S.touched=true">${esc(r.note)}</textarea><button class="p" id="sv" onclick="run(save)"${S.fresh?'':' disabled'}>${S.fresh?'저장':'불러오는 중…'}</button>`}
 function mark(id,t){S.touched=true;S.r.prayer=$('#pr').value;S.r.note=$('#nt').value;S.st[id]=t;draw()}
 async function save(){const un=S.r.students.filter(s=>!S.st[s.id]).length;
   if(un&&!confirm(`미체크 ${un}명은 결석으로 저장됩니다. 계속할까요?`))return;
@@ -679,8 +679,9 @@ async function vRep(){
   const f=()=>run(async()=>{const q={...(w=>w=='r4'?{from:addd(cur,-21),to:addd(cur,6)}:{from:w,to:addd(w,6)})($('#w').value),bu:buVal(),cls:$('#c').value};await swr('reports','reports|'+JSON.stringify(q),bg=>call('reports',q,bg),a=>{
     const md_=(U.admin||U.mgr)&&$('#m')?(S.rpm||''):'';if(md_)a=a.filter(o=>md_=='p'?o.prayer:o.note);
     S.rp=a;$('#l').innerHTML=a.length?a.map((o,i)=>md_?`<div class="card rc" style="border-top-color:${md_=='p'?'#a78bfa':'#fdba74'}"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small><p>${br(md_=='p'?o.prayer:o.note)}</p></div>`:`<div class="card rc"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small>`+
-      (o.att?(t=>`<div class="rh">출석 <b>${o.att['출석']}</b> · 결석 <b>${o.att['결석']}</b>${t?`<div class="meter"><i style="width:${o.att['출석']/t*100}%"></i></div><b>${Math.round(o.att['출석']/t*100)}%</b>`:''}</div>`)(o.att['출석']+o.att['결석']):'')+
-      (o.absent&&o.absent.length?`<span class="lb lx">결석 ${o.absent.length}</span><div class="abs">${o.absent.map(a=>`<span>${esc(a.name)}${a.reason?` <small>${esc(a.reason)}</small>`:''}</span>`).join('')}</div>`:'')+
+      (o.att?(t=>`<div class="rh">출석률${t?`<div class="meter"><i style="width:${o.att['출석']/t*100}%"></i></div><b>${Math.round(o.att['출석']/t*100)}%</b>`:''}</div>`)(o.att['출석']+o.att['결석']):'')+
+      (o.present&&o.present.length?`<div class="abs nl"><span class="lb lo">출석 ${o.present.length}</span>${o.present.map(n=>`<span class="po">${esc(n)}</span>`).join('')}</div>`:'')+
+      (o.absent&&o.absent.length?`<div class="abs nl"><span class="lb lx">결석 ${o.absent.length}</span>${o.absent.map(a=>`<span>${esc(a.name)}${a.reason?` <small>${esc(a.reason)}</small>`:''}</span>`).join('')}</div>`:'')+
       (o.prayer?`<span class="lb lp">🙏 기도제목</span><p class="tx">${br(o.prayer)}</p>`:'')+(o.note?`<span class="lb ln">📌 특이사항</span><p class="tx">${br(o.note)}</p>`:'')+
       (!o.prayer&&!o.note?'<p><small>작성된 내용이 없습니다.</small></p>':'')+(canEd(o)?`<p><button class="vb" onclick="repEd(${i})">수정</button><button class="vb dl" onclick="repDl(${i})">삭제</button></p>`:'')+`</div>`).join(''):emp('해당 기간에 기록된 보고서가 없습니다.','📝')})});
   if(multi())$('#bu').onchange=()=>{fill();f()};
