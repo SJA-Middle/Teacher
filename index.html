@@ -152,6 +152,7 @@ a.tl{display:inline-flex;align-items:center;gap:5px;margin:6px 6px 0 0;padding:5
 .tgl{display:inline-flex;align-items:center;gap:6px;margin:4px 0 6px;padding:8px 14px;border-radius:999px;border:1px solid #c3d3ec;background:#fff;color:#55657f;font-size:14px;font-weight:600;cursor:pointer}.tgl.on{background:#fdf2f8;border-color:#f9a8d4;color:#be185d}
 .bd8{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:8px;background:#fdf2f8;color:#be185d;font-size:11px;font-weight:700}
 .rlow{color:#dc2626;font-weight:700}.ssum{margin:4px 2px 8px;font-size:13.5px;color:#475569}
+.sg{display:inline-block;padding:2px 8px;border-radius:9px;font-size:11.5px;font-weight:700;white-space:nowrap}.sg.s1{background:#e0f2fe;color:#0369a1}.sg.s2{background:#dcfce7;color:#15803d}.sg.s3{background:#1e3a8a;color:#fff}.sg.s0{background:#fff;color:#94a3b8;border:1px solid #cbd5e1}.sgr{float:right;margin:1px 0 0 8px}nav.n8 button{white-space:nowrap}.sgsel{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:#55657f}.sgsel select{flex:1;width:auto;margin:0;padding:7px 10px}
 .nst{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;color:#fff;background:#22c55e;vertical-align:middle}.nst.s2{background:#2563eb}.nst.s3{background:#94a3b8}.nst.tc{margin-left:4px}nav.n8{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 8px}nav.n8 button{flex-direction:row;justify-content:center;gap:6px;padding:9px 4px;font-size:12.5px;min-width:0}nav.n8 button span{display:flex}nav.n8 button svg{width:18px;height:18px}nav.n8 .bd{top:-6px;left:auto;right:-4px}.hs{background:#fff;border-radius:20px;margin:14px 0;padding:0 12px 12px;border-top:5px solid var(--c);box-shadow:0 1px 2px #0f172a0d,0 8px 22px #2563eb14;overflow:hidden}.hsh{display:flex;align-items:center;gap:8px;margin:0 -12px 10px;padding:11px 14px;background:color-mix(in srgb,var(--c) 9%,#fff)}.hsh b{font-size:15px;color:#0f172a}.hsh small{margin-left:auto;font-size:12px;color:#64748b}.hsi{font-size:18px}.hsp{margin:6px 2px;font-size:14px;color:#475569}.hs table{box-shadow:none;border:1px solid #e2e8f0}.hs th{background:color-mix(in srgb,var(--c) 12%,#fff);color:#1e293b}.hs .sum span{box-shadow:none;background:#f8fafc;border:1px solid #eef2f7}.hs .chips button.on{background:var(--c);border-color:var(--c)}.hs .hr{box-shadow:none;background:#faf5ff;border:1px solid #ede9fe}.hh{margin:14px 2px 6px;font-size:15px;font-weight:800;color:#1e3a6e}.hh small{font-weight:500;color:#8a96ab;margin-left:6px}.up{color:#16a34a;font-weight:700}.dn{color:#dc2626;font-weight:700}.eq{color:#94a3b8}.hl{display:block;margin:0 0 8px;padding:10px 14px;border-radius:14px;background:#fff1f2;color:#be123c;font-size:14px;font-weight:600;text-align:left;border:0;width:100%}.hr{background:#fff;border-radius:14px;padding:10px 14px;margin:6px 0;box-shadow:0 1px 2px #0f172a0a,0 6px 16px #2563eb14}.hr b{font-size:14px}.hr p{margin:4px 0 0;white-space:pre-wrap;font-size:14px;color:#334155}.row .nfw{flex:0 0 100%;order:9;display:flex;align-items:center;gap:8px;font-size:13px;color:#55657f;margin-top:2px}.row .nfw select{flex:1;width:auto;min-width:0;margin:0;padding:8px 10px}.wks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.wks span{font-size:12px;padding:3px 8px;border-radius:9px;background:#eef2f9;color:#475569}.wks span.ok{background:#22c55e;color:#fff;font-weight:600}.wks span.sub{outline:2px dashed #fff;outline-offset:-4px}.sum.nfs span{cursor:pointer;border:2px solid transparent}.sum.nfs span.on{border-color:#2563eb;background:#eff6ff}.nnote{margin:6px 0 0;padding:6px 10px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:12px;white-space:pre-wrap}
 .nfl{display:block;text-align:left;font-size:12px;font-weight:600;color:#64748b;margin:10px 2px 0}.nfc{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.nfcam{display:block;text-align:center;box-sizing:border-box;cursor:pointer}
 .fam{border:1px solid #e2e8f0;border-radius:12px;padding:4px 8px;margin:6px 0}.fam input{margin:3px 0;padding:8px}input.unsure,select.unsure{background:#fff7d6;border-color:#f5c26b}
@@ -168,7 +169,9 @@ a.tl{display:inline-flex;align-items:center;gap:5px;margin:6px 6px 0 0;padding:5
 <script>
 // 구글 시트 데이터를 불러오는 Apps Script 웹 앱 주소 (배포를 새로 만들면 이 주소만 바꾸세요)
 const API='https://script.google.com/macros/s/AKfycbyN0ra0LHrEO0y-Z0LXrqGC4hjElVirv99gEzlcYtgMxGZ8HEh60h6CSjHvF7iFxrE/exec';
-const $=s=>document.querySelector(s),T=['출석','출석통계','보고서','심방일지','연락처'];
+const $=s=>document.querySelector(s),T=['출석','연락처','보고서','심방일지','출석통계'];
+// 탭에 보이는 이름 (내부 이름은 그대로 두고 표시만 바꿈)
+const TL={'출석':'보고서 작성','연락처':'학생 명단','보고서':'누적 보고서'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const br=s=>esc(s).replace(/\n/g,'<br>');
 const tel=(n,l)=>n?`<a class="tl" href="tel:${esc(n)}">${l?'<i>'+l+'</i>':''}${esc(n)}</a>`:'';
@@ -275,7 +278,7 @@ async function call(a,p,bg){
 // ===== 빠른 화면 (지난번 내용 먼저 보여주기) =====
 // 목록 화면은 기기에 저장해 둔 지난번 내용을 곧바로 그리고, 서버의 최신 내용이 도착하면 달라진 경우에만 다시 그림.
 // 무언가를 저장·삭제하면 저장해 둔 내용은 모두 지워서 옛 내용이 보이지 않게 함. 로그아웃하면 기기에서도 지움.
-const RC={},SW={},WR=/^(save|nf(Save|AttSave|Del|Done|Undo|Assign)|care(Add|Del|Edit)|rep(Edit|Del)|pinReset)$/;
+const RC={},SW={},WR=/^(save|faithSet|nf(Save|AttSave|Del|Done|Undo|Assign)|care(Add|Del|Edit)|rep(Edit|Del)|pinReset)$/;
 function rcGet(k){if(RC[k])return RC[k];try{const v=JSON.parse(localStorage.getItem('rc|'+k));if(v&&Date.now()-v.t<864e5)return RC[k]=v}catch(e){}return null}
 function rcPut(k,d){const v={t:Date.now(),d};RC[k]=v;try{localStorage.setItem('rc|'+k,JSON.stringify(v))}catch(e){}}
 function rcClear(){for(const k in RC)delete RC[k];try{Object.keys(localStorage).filter(k=>k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}}
@@ -305,7 +308,7 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
   const nfOnly=!U.admin&&!U.mgr&&!U.classes.length&&U.nf&&U.nf.length;
   $('#tabs').style.display=nfOnly?'none':'';
   if(nfOnly){$('#tabs').innerHTML='';tab='새친구';vNf()}
-  else{const tt=TT();$('#tabs').className=tt.length>=8?'n8':'';$('#tabs').innerHTML=tt.map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${t}</button>`).join('');go(U.admin?'홈':'출석')}
+  else{const tt=TT();$('#tabs').className=tt.length>=8?'n8':'';$('#tabs').innerHTML=tt.map(t=>`<button data-t="${t}" onclick="go('${t}')"><span>${ic[t]}</span>${TL[t]||t}</button>`).join('');go(U.admin?'홈':'출석')}
   if(U.nf&&U.nf.length)call('nfList',{},1).then(r=>rcPut('nfList',r)).catch(()=>{});   // 새친구 화면을 미리 받아 둠
   if(U.admin||U.mgr)call('week',{date:D},1).then(r=>{rcPut('week|'+D,r);const n=r.list.filter(x=>!x.done).length,b=document.querySelector('[data-t="관리"]');if(b&&n){const e=document.createElement('i');e.className='bd';e.textContent=n;b.appendChild(e)}}).catch(()=>{});
   if(U.admin)call('alerts',{},1).then(a=>{if(!a||!a.length)return;abSet('ab1','<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>')}).catch(()=>{});
@@ -341,6 +344,14 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
     L.map(o=>{const l=[0,1,2,3].map(i=>(o.ls||[])[i]||0);return`<tr><td><b>${esc(o.bu)}</b></td><td>${l[0]}</td><td>${l[1]}</td><td>${l[2]}</td><td>${l[3]}</td><td><b>${l[0]+l[1]+l[2]+l[3]}</b></td></tr>`}).join('')+`</table>`+
     `<p class="hsp" style="margin-top:10px;font-weight:700;color:#be123c">이번 주 새로 장기결석자가 된 학생 ${F.length}명</p>`+
     (F.length?`<div class="wks">${F.map(x=>`<span class="ok" style="background:${x.n>=104?'#450a0a':x.n>=52?'#7f1d1d':x.n>=26?'#dc2626':'#f97316'}">${esc(x.name)} · ${esc(x.cls)} · ${x.n>=104?'2년':x.n>=52?'1년':x.n>=26?'6개월':'4주'}</span>`).join('')}</div>`:'<p class="hsp" style="color:#8a96ab">없습니다 🙏</p>'));
+  // 신급 현황: 부별 수 + 단계별 학생 이름(반별)
+  {const FK=[['유아세례','s1','유아세례'],['학습','s2','학습'],['완료','s3','입교·세례'],['없음','s0','없음']],fl=r.faL||[],fk=S.hf||'유아세례',sel=fl.filter(x=>x.k==fk),byC={};
+   sel.forEach(x=>(byC[x.c]=byC[x.c]||[]).push(x.n));const cs=Object.keys(byC).sort((x,y)=>x.localeCompare(y,'ko',{numeric:true}));
+   if(L.some(o=>o.fa))h+=hsec('#1e3a8a','💧','신급 현황','유아세례·학습 학생은 입교·세례 대상',
+    `<table><tr><th>부</th>${FK.map(([k,c,t])=>`<th><span class="sg ${c}">${t}</span></th>`).join('')}<th>합계</th></tr>`+
+    L.map(o=>{const f=o.fa||{};return`<tr><td><b>${esc(o.bu)}</b></td>${FK.map(([k])=>`<td>${f[k]||0}</td>`).join('')}<td><b>${FK.reduce((x,[k])=>x+(f[k]||0),0)}</b></td></tr>`}).join('')+`</table>`+
+    `<div class="chips" style="margin-top:10px">${FK.map(([k,c,t])=>`<button class="${fk==k?'on':''}" onclick="S.hf='${k}';hDraw()">${t} ${fl.filter(x=>x.k==k).length}</button>`).join('')}</div>`+
+    (cs.length?cs.map(c=>`<div class="hr"><b>${esc(c)}</b> <small>${byC[c].map(esc).join(' · ')}</small></div>`).join(''):'<p class="hsp" style="color:#8a96ab">해당 학생이 없습니다.</p>'))}
   const P=(r.reps||[]).filter(x=>x.prayer),N=(r.reps||[]).filter(x=>x.note),m=S.hm||'p',Q=m=='p'?P:N;
   h+=hsec('#7c3aed','🙏','반모임 보고서 모아보기','',
     `<div class="chips">${[['p','기도제목 '+P.length],['n','특이사항 '+N.length]].map(([k,t])=>`<button class="${m==k?'on':''}" onclick="S.hm='${k}';hDraw()">${t}</button>`).join('')}</div>`+
@@ -704,7 +715,8 @@ async function vPpl(){
   const f=()=>{const q=$('#q').value.trim(),b=$('#b').checked,sc=$('#sc').value;
     $('#l').innerHTML=a.filter(o=>(!q||String(o.name).includes(q)||String(o.school).includes(q))&&(!sc||(sc=='__none'?!o.school:o.school==sc))&&(!b||String(o.birth).slice(5,7)==mo))
     .sort((x,y)=>b?String(x.birth).slice(8)-String(y.birth).slice(8):0)
-    .map(o=>`<div class="row"><div><b>${esc(o.name)}</b>${o.birth&&String(o.birth).slice(5,7)==mo?'<span class="bd8">🎂 이번 달</span>':''} <small>${esc(o.cls)}${o.grade&&!String(o.cls).includes(String(o.grade).replace(/학년$/,''))?' '+esc(o.grade):''}</small><br><small>${o.school?esc(o.school)+' · ':''}${o.birth?'생일 '+(+String(o.birth).slice(5,7))+'월 '+(+String(o.birth).slice(8,10))+'일 ':''}${esc(o.note)}</small><br>${tel(o.tel,'본인')}${tel(o.ptel,'부모')}</div></div>`).join('')||emp('해당하는 학생이 없습니다.','🔍')};
+    .map(o=>`<div class="row"><div style="flex:1;min-width:0"><span class="sg sgr ${sgC(o.faith)}">${esc(o.faith||'신급 없음')}</span><b>${esc(o.name)}</b>${o.birth&&String(o.birth).slice(5,7)==mo?'<span class="bd8">🎂 이번 달</span>':''} <small>${esc(o.cls)}${o.grade&&!String(o.cls).includes(String(o.grade).replace(/학년$/,''))?' '+esc(o.grade):''}</small><br><small>${o.school?esc(o.school)+' · ':''}${o.birth?'생일 '+(+String(o.birth).slice(5,7))+'월 '+(+String(o.birth).slice(8,10))+'일 ':''}${esc(o.note)}</small><br>${tel(o.tel,'본인')}${tel(o.ptel,'부모')}${U.admin?`<div class="sgsel">신급 <select onchange="faithSet('${esc(o.id)}',this)">${FA.map(x=>`<option value="${x}"${(o.faith||'')==x?' selected':''}>${x||'없음'}</option>`).join('')}</select></div>`:''}</div></div>`).join('')||emp('해당하는 학생이 없습니다.','🔍')};
+  S.pplf=f;S.ppla=()=>a;
   const load=()=>run(async()=>{const bu=buVal();await swr('people','people|'+bu,bg=>call('people',{bu},bg),d=>{a=d;
     const cur=$('#sc').value,ss=[...new Set(a.map(o=>String(o.school||'').trim()).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko'));
     $('#sc').innerHTML='<option value="">전체 학교</option>'+ss.map(x=>`<option>${esc(x)}</option>`).join('')+(a.some(o=>!o.school)?'<option value="__none">학교 미입력</option>':'');
@@ -712,6 +724,11 @@ async function vPpl(){
   if(multi())$('#bu').onchange=load;
   $('#q').oninput=$('#b').onchange=$('#sc').onchange=f;load()}
 
+// 신급: 유아세례(하늘) · 학습(연두) · 입교·세례(남색) · 없음(회색)
+const FA=['','유아세례','학습','입교','세례'],sgC=f=>f=='유아세례'?'s1':f=='학습'?'s2':(f=='입교'||f=='세례')?'s3':'s0';
+function faithSet(id,el){const v=el.value;el.disabled=true;
+  call('faithSet',{id,v}).then(r=>{const o=(S.ppla?S.ppla():[]).find(x=>String(x.id)==String(id));if(o)o.faith=r.faith;toast('신급을 저장했어요');S.pplf&&S.pplf()})
+   .catch(e=>{alert(e.message||e);S.pplf&&S.pplf()}).finally(()=>{el.disabled=false})}
 // 저장해 둔 로그인 정보가 있으면 서버 확인을 기다리지 않고 바로 화면을 띄움 (확인은 뒤에서 진행)
 function fast(s){let c=null;try{c=JSON.parse(localStorage.getItem('uc'))}catch(e){}
   if(!c||!c.classes){if(s.p){$('#p').value=s.p;login()}else if(s.tk){P=s;call('login',{},1).then(u=>{U=u;keep();enter()}).catch(()=>{})}return}
