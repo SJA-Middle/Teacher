@@ -363,10 +363,15 @@ function vNf(){VG++;const m=S.nfm||'명단';
 async function nfList(){const a=$('#a');a.innerHTML='불러오는 중…';
   await swr('nfList','nfList',bg=>call('nfList',{},bg),r=>{S.nlead=r.lead||[];S.ncls=r.cls||null;const bu=nfBu(),A=r.list.filter(o=>bu=='전체'||o.bu==bu);S.nla=A;S.nall=bu=='전체';nfListDraw()})}
 // 위의 숫자 칸을 누르면 그 상태의 새친구만 보임 (전체를 누르면 모두)
-function nfListDraw(){const A=S.nla||[],f=S.nfst||'',L=f?A.filter(o=>o.st==f):A,cnt=k=>A.filter(o=>o.st==k).length;S.nl=L;
+function nfListDraw(){const A=S.nla||[],f=S.nfst||'',cnt=k=>A.filter(o=>o.st==k).length;
   const box=(k,c,t,n)=>`<span class="${c}${f==k?' on':''}" onclick="S.nfst='${k}';nfListDraw()"><b${k=='수료'?' style="color:#2563eb"':''}>${n}</b>${t}</span>`;
   $('#a').innerHTML=`<div class="sum nfs">${box('','','전체',A.length)}${box('교육중','a','교육 중',cnt('교육중'))}${box('수료','','수료',cnt('수료'))}${box('배정완료','c','배정 완료',cnt('배정완료'))}</div>`+
-   `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+(L.length?L.map(nfCard).join(''):emp(f?esc(f)+' 상태인 새친구가 없습니다.':'등록된 새친구가 없습니다.','🌱'))}
+   `<button class="p" onclick="S.nfm='등록카드';S.nfe=null;vNf()">+ 새친구 등록</button>`+
+   `<input id="nfq" type="search" placeholder="🔍 이름 검색" value="${esc(S.nfq||'')}" oninput="S.nfq=this.value;nfListBody()" autocomplete="off"><div id="nfl"></div>`;nfListBody()}
+// 새친구명단 검색: 이름(또는 학교·담당교사)으로 바로 거르기 — 목록만 다시 그려서 입력 중 커서가 유지됨
+function nfListBody(){const A=S.nla||[],f=S.nfst||'',q=String(S.nfq||'').replace(/\s+/g,'');
+  const L=(f?A.filter(o=>o.st==f):A).filter(o=>!q||[o.name,o.school,o.tch].some(x=>String(x||'').replace(/\s+/g,'').includes(q)));S.nl=L;
+  $('#nfl').innerHTML=L.length?L.map(nfCard).join(''):emp(q?`'${esc(S.nfq)}'에 맞는 새친구가 없습니다.`:f?esc(f)+' 상태인 새친구가 없습니다.':'등록된 새친구가 없습니다.','🌱')}
 // 관리자 또는 그 부의 새친구 팀장: 반배정·수료 취소·배정완료 수정·삭제 가능
 const nfLd=b=>!!(U.admin||(U.nfLead||[]).includes(b)||(S.nlead||[]).includes(b));
 function nfCard(o,i){const cs=(S.ncls&&S.ncls[o.bu])||U.classes.filter(x=>x.bu==o.bu).map(x=>x.name),sc={'교육중':'','수료':' s2','배정완료':' s3'}[o.st]||'';
