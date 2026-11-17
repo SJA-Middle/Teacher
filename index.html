@@ -357,6 +357,7 @@ function hDraw(){const r=S.hr;if(!r)return;const L=r.list||[],sm=k=>L.reduce((x,
     `<div class="chips fa" style="margin-top:10px">${FK.map(([k,c,t])=>`<button class="${fk==k?'on':''}" onclick="S.hf='${k}';hDraw()">${t} ${fl.filter(x=>x.k==k).length}</button>`).join('')}</div>`+
     (cs.length?cs.map(c=>`<div class="hr"><b>${esc(c)}</b> <small>${byC[c].map(esc).join(' · ')}</small></div>`).join(''):'<p class="hsp" style="color:#8a96ab">해당 학생이 없습니다.</p>'))}
   $('#hl').innerHTML=h}
+const atL=x=>{x=String(x);return x.length>10?md(x.slice(0,10))+' '+x.slice(11,16):md(x)};   // 작성 시각 11/16 21:44
 const opts=a=>a.map(c=>`<option>${esc(c)}</option>`).join('');
 
 // ===== 새친구: 등록카드 · 교육 출석 · 수료 · 반배정 (권한 있는 선생님에게만 탭이 보임) =====
@@ -684,7 +685,8 @@ async function vRep(){
   const fill=()=>{$('#c').innerHTML=opts(['전체',...clsFor(buVal())])};fill();
   const f=()=>run(async()=>{const q={...(w=>w=='r4'?{from:addd(cur,-21),to:addd(cur,6)}:{from:w,to:addd(w,6)})($('#w').value),bu:buVal(),cls:$('#c').value};await swr('reports','reports|'+JSON.stringify(q),bg=>call('reports',q,bg),a=>{
     const md_=(U.admin||U.mgr)&&$('#m')?(S.rpm||''):'';if(md_)a=a.filter(o=>md_=='p'?o.prayer:o.note);
-    S.rp=a;$('#l').innerHTML=a.length?a.map((o,i)=>md_?`<div class="card rc" style="border-top-color:${md_=='p'?'#a78bfa':'#fdba74'}"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small><p>${br(md_=='p'?o.prayer:o.note)}</p></div>`:`<div class="card rc"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}</small>`+
+    if(U.admin)a=a.slice().sort((x,y)=>String(y.at||'').localeCompare(String(x.at||'')));   // 관리자: 작성 시각 최신순 (늦게 쓴 반이 맨 위)
+    S.rp=a;$('#l').innerHTML=a.length?a.map((o,i)=>md_?`<div class="card rc" style="border-top-color:${md_=='p'?'#a78bfa':'#fdba74'}"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}${U.admin&&o.at?' · '+atL(o.at)+' 작성':''}</small><p>${br(md_=='p'?o.prayer:o.note)}</p></div>`:`<div class="card rc"><b>${lbl(sun(String(o.date).slice(0,10)))} 주일</b> <small>${esc(o.cls)}${o.by?' · '+esc(o.by):''}${U.admin&&o.at?' · '+atL(o.at)+' 작성':''}</small>`+
       (o.att?(t=>`<div class="rh">출석률${t?`<div class="meter"><i style="width:${o.att['출석']/t*100}%"></i></div><b>${Math.round(o.att['출석']/t*100)}%</b>`:''}</div>`)(o.att['출석']+o.att['결석']):'')+
       (o.present&&o.present.length?`<div class="abs nl"><span class="lb lo">출석 ${o.present.length}</span>${o.present.map(n=>`<span class="po">${esc(n)}</span>`).join('')}</div>`:'')+
       (o.absent&&o.absent.length?`<div class="abs nl"><span class="lb lx">결석 ${o.absent.length}</span>${o.absent.map(a=>`<span>${esc(a.name)}${a.reason?` <small>${esc(a.reason)}</small>`:''}</span>`).join('')}</div>`:'')+
