@@ -196,7 +196,7 @@ function vAdm(){VG++;if(S.adm=='심방기록')S.adm='';const m=S.adm||'보고서
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
-  const tb=`<div class="row" style="background:${TRUST?'#e8f7ee':'#f1f5f9'}"><div><b>🔐 이 기기 로그인 유지</b> <small>${TRUST?'<b style="color:#15803d">켜짐 · 30일 유지</b>':'꺼짐 · 창을 닫거나 5분간 사용하지 않으면 로그아웃'}</small><br><small>내 맥미니처럼 나만 쓰는 기기에서만 켜세요. 다른 모든 기기는 자동으로 꺼져 있어요.</small></div><button class="vb" onclick="trustSet(${!TRUST})">${TRUST?'끄기':'켜기'}</button></div>`;
+  const tb=`<div class="row" style="background:${TRUST?'#e8f7ee':'#f1f5f9'}"><div><b>🔐 이 기기 로그인 유지</b> <small>${TRUST?'<b style="color:#15803d">켜짐 · 30일 유지</b>':'꺼짐 · 창을 닫거나 5분간 사용하지 않으면 로그아웃'}</small><br><small>내 맥미니처럼 나만 쓰는 기기에서만 켜세요. 다른 모든 기기는 자동으로 꺼져 있어요.</small></div><button class="vb" onclick="trustSet(${!TRUST},this)">${TRUST?'끄기':'켜기'}</button></div>`;
   try{await swr('tchList','tchList',bg=>call('tchList',{},bg),r=>{S.tl=r;
     a.innerHTML=tb+r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.locked?'<b style="color:#d9473f">🔒 잠김 · PIN 초기화로 해제</b>':o.init?'PIN 재설정 필요':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
   catch(e){a.innerHTML='<p>'+esc(e.message)+'</p>'}}
@@ -269,7 +269,9 @@ function idleOver(){if(TRUST)return false;try{const t=+sessionStorage.getItem('l
 if(!TRUST){let w=0;['pointerdown','keydown','input','scroll','touchstart'].forEach(ev=>addEventListener(ev,()=>{const n=Date.now();if(n-w>5000){w=n;seen()}},{passive:true,capture:true}));
   const chk=()=>{if(P&&idleOver()){logout(1)}};setInterval(chk,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})}
 // 관리자 전용: 이 기기를 로그인 유지 기기로 지정/해제
-function trustSet(on){if(on&&!confirm('이 기기에서 로그인을 30일 동안 유지할까요?\n\n내 맥미니처럼 나만 쓰는 기기에서만 켜 주세요.\nPC방·남의 기기에서는 절대 켜지 마세요.'))return;
+// (일부 브라우저는 확인 창을 막아 두므로, 확인 창 대신 버튼을 한 번 더 누르게 함)
+function trustSet(on,el){if(on&&el&&!el.dataset.ok){el.dataset.ok=1;el.textContent='한 번 더 눌러 켜기';el.style.background='#d9473f';el.style.color='#fff';
+    toast('나만 쓰는 기기에서만 켜세요. PC방에서는 절대 안 돼요!');setTimeout(()=>{if(el.isConnected){delete el.dataset.ok;el.textContent='켜기';el.style.background='';el.style.color=''}},6000);return}
   try{const src=on?sessionStorage:localStorage,dst=on?localStorage:sessionStorage;Object.keys(src).filter(AK).forEach(k=>{dst.setItem(k,src.getItem(k));src.removeItem(k)});
     if(on)localStorage.setItem('trust','1');else{localStorage.removeItem('trust');seen()}}catch(e){}
   location.reload()}
