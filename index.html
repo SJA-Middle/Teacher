@@ -173,6 +173,8 @@ const $=s=>document.querySelector(s),T=['출석','연락처','보고서','심방
 // 탭에 보이는 이름 (내부 이름은 그대로 두고 표시만 바꿈)
 const TL={'출석':'보고서 작성','연락처':'학생 명단','보고서':'누적 보고서'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// onclick 등 HTML 속성 안의 자바스크립트 문자열에 값을 넣을 때: 영문·숫자만 그대로 두고 나머지는 \uXXXX로 바꿔 따옴표 깨짐·스크립트 주입을 막음
+const escj=s=>String(s==null?'':s).replace(/[^\w-]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));
 const br=s=>esc(s).replace(/\n/g,'<br>');
 const tel=(n,l)=>n?`<a class="tl" href="tel:${esc(n)}">${l?'<i>'+l+'</i>':''}${esc(n)}</a>`:'';
 const emp=(t,i)=>`<div class="emp"><span>${i||'🗂️'}</span>${t}</div>`;   // 빈 화면 안내
@@ -411,7 +413,7 @@ function nfCard(o,i){const cs=(S.ncls&&S.ncls[o.bu])||U.classes.filter(x=>x.bu==
    (o.wk?wkChips(o):'')+`<p><small>${o.wk?'':`교육 ${dots(o.n)} ${o.n}/${NFW}주 · `}등록 ${esc(md(o.reg))}${o.guide?' · 인도 '+esc(o.guide):''}</small></p>`+
    (o.st=='배정완료'?`<p><small>✅ ${esc(o.cls)} 배정${o.asg?' ('+esc(md(o.asg))+')':''}</small></p>`:'')+
    (o.note?`<p class="nnote">📝 ${esc(o.note)}</p>`:'')+
-   `<p><button class="vb" onclick="S.nfm='등록카드';S.nfe='${esc(o.id)}';vNf()">상세정보 보기·수정</button>`+
+   `<p><button class="vb" onclick="S.nfm='등록카드';S.nfe='${escj(o.id)}';vNf()">상세정보 보기·수정</button>`+
    (o.st=='교육중'&&o.n>=NFW?`<button class="vb" onclick="nfDone(${i})">수료 처리</button>`:'')+
    (o.st=='수료'&&nfLd(o.bu)?`<button class="vb dl" onclick="nfUndo(${i})">수료 취소</button>`:'')+'</p>'+
    (o.st=='수료'&&nfLd(o.bu)?`<div class="bar"><select id="ac${i}"><option value="">배정할 반 선택</option>${opts(cs)}</select><button class="vb" onclick="nfAsg(${i})">반배정</button></div>`:'')+
@@ -434,7 +436,7 @@ async function nfAtt(){$('#a').innerHTML=`<div class="wk"><select id="d">${sunOp
     S.nab=bus.length>1;S.na=[].concat(...rs.map((r,i)=>r.list.map(o=>Object.assign({},o,{bu:bus[i]}))));S.nst={};S.ntt={};S.na.forEach(o=>{S.nst[o.id]=o.st=='출석'?'출석':'';S.ntt[o.id]=o.t||o.tch||''});S.nst0=Object.assign({},S.nst);nfAttDraw()})});
   $('#d').onchange=ld;ld()}
 function nfAttDraw(){const L=S.na;
-  $('#l').innerHTML=L.length?L.map(o=>`<div class="row"><b class="nm">${S.nab?`<small class="gr">${esc(o.bu)}</small>`:''}${o.tch?`<small class="gr" style="background:${tcCol(o.tch)};color:#fff">${esc(o.tch)}</small>`:''}${esc(o.name)}<small class="ls">교육 ${dots(o.n)} ${o.n}/${NFW}</small></b><span class="seg"><button class="${S.nst[o.id]=='출석'?'o':''}" onclick="S.ntouch=true;S.nst['${esc(o.id)}']=S.nst['${esc(o.id)}']=='출석'?'':'출석';nfAttDraw()">교육출석</button></span>${S.nst[o.id]=='출석'?`<div class="nfw">교육한 선생님 <select onchange="S.ntouch=true;S.ntt['${esc(o.id)}']=this.value">${(()=>{const L=((S.ntch||{})[o.bu]||[]).slice(),c=S.ntt[o.id]||U.name;if(c&&!L.includes(c))L.push(c);return L.map(x=>`<option${x==c?' selected':''}>${esc(x)}</option>`).join('')})()}</select></div>`:''}</div>`).join('')+
+  $('#l').innerHTML=L.length?L.map(o=>`<div class="row"><b class="nm">${S.nab?`<small class="gr">${esc(o.bu)}</small>`:''}${o.tch?`<small class="gr" style="background:${tcCol(o.tch)};color:#fff">${esc(o.tch)}</small>`:''}${esc(o.name)}<small class="ls">교육 ${dots(o.n)} ${o.n}/${NFW}</small></b><span class="seg"><button class="${S.nst[o.id]=='출석'?'o':''}" onclick="S.ntouch=true;S.nst['${escj(o.id)}']=S.nst['${escj(o.id)}']=='출석'?'':'출석';nfAttDraw()">교육출석</button></span>${S.nst[o.id]=='출석'?`<div class="nfw">교육한 선생님 <select onchange="S.ntouch=true;S.ntt['${escj(o.id)}']=this.value">${(()=>{const L=((S.ntch||{})[o.bu]||[]).slice(),c=S.ntt[o.id]||U.name;if(c&&!L.includes(c))L.push(c);return L.map(x=>`<option${x==c?' selected':''}>${esc(x)}</option>`).join('')})()}</select></div>`:''}</div>`).join('')+
    `<button class="p" onclick="run(nfAttSave)">저장 (교육출석 ${L.filter(o=>S.nst[o.id]=='출석').length}명)</button><p><small>온 새친구만 '교육출석'을 눌러 주세요. 한 번 더 누르면 취소돼요. 담당교사가 아닌 선생님이 가르쳤다면 '교육한 선생님'을 바꿔 주세요. ${NFW}주를 모두 출석하면 자동으로 수료돼요.</small></p>`:emp('교육 중인 새친구가 없습니다.','🌱')}
 async function nfAttSave(){const st={};S.na.forEach(o=>{if(S.nst[o.id]=='출석')st[o.id]='출석';else if((S.nst0||{})[o.id]=='출석')st[o.id]='결석'});   // 결석은 따로 체크하지 않음: 출석을 취소한 사람만 지움
   if(!Object.keys(st).length)throw new Error('교육출석을 먼저 눌러 주세요.');
@@ -667,8 +669,8 @@ function allP(){S.touched=true;S.r.prayer=$('#pr').value;S.r.note=$('#nt').value
 function draw(){const r=S.r;if(/성가반/.test(S.cls))r.students.sort((a,b)=>String(a.grade).localeCompare(String(b.grade),'ko'));
   const na=r.students.filter(s=>S.st[s.id]=='출석').length,nb=r.students.filter(s=>S.st[s.id]=='결석').length,nc=r.students.length-na-nb;
   $('#l').innerHTML=`<div class="sum"><span class="a"><b>${na}</b>출석</span><span class="b"><b>${nb}</b>결석</span><span class="c"><b>${nc}</b>미체크</span></div>${r.students.length?`<div class="prog" title="체크 진행"><i class="pa" style="width:${na/r.students.length*100}%"></i><i class="pb" style="width:${nb/r.students.length*100}%"></i></div>`:''}<button class="all" onclick="allP()">전원 출석으로 채우기</button>`+r.students.map(s=>`<div class="row${S.st[s.id]=='출석'?' so':S.st[s.id]=='결석'?' sx':''}"><b class="nm">${gr(s)}${esc(s.name)}${em(s)}${s.n>=13?'<small class="lg">'+lg(s.n)+'</small>':''}<small class="ls">${s.last?'마지막 출석 '+md(s.last):'출석 기록 없음'}</small></b><span class="seg">`+
-   [['o','출석'],['x','결석']].map(([k,t])=>`<button class="${S.st[s.id]==t?k:''}" onclick="mark('${s.id}','${t}')">${t}</button>`).join('')+`</span>`+
-   (S.st[s.id]=='결석'?`<input class="rs" list="rl" maxlength="100" placeholder="결석 사유 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${s.id}']=this.value">`:S.st[s.id]=='출석'?`<input class="rs ro" maxlength="100" placeholder="개인 특이사항 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${s.id}']=this.value">`:'')+`</div>`).join('')+
+   [['o','출석'],['x','결석']].map(([k,t])=>`<button class="${S.st[s.id]==t?k:''}" onclick="mark('${escj(s.id)}','${t}')">${t}</button>`).join('')+`</span>`+
+   (S.st[s.id]=='결석'?`<input class="rs" list="rl" maxlength="100" placeholder="결석 사유 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${escj(s.id)}']=this.value">`:S.st[s.id]=='출석'?`<input class="rs ro" maxlength="100" placeholder="개인 특이사항 (선택)" value="${esc(S.rs[s.id]||'')}" oninput="S.touched=true;S.rs['${escj(s.id)}']=this.value">`:'')+`</div>`).join('')+
    `<p class="lgd"><span>🐑 6개월 이상 잃은양</span><span>🐑🐑 1년 이상 잃은양</span><span>🐑🐑🐑 2년 이상 잃은양</span><span><img class="lh" src="lead.png" alt=""> 유스비카 리더</span></p><datalist id="rl"><option value="몸이 아픔"><option value="가족 행사"><option value="학교 행사·시험"><option value="학원"><option value="여행"><option value="연락 안 됨"></datalist><textarea id="pr" rows="3" placeholder="기도제목" oninput="S.touched=true">${esc(r.prayer)}</textarea><textarea id="nt" rows="3" placeholder="반 특이사항" oninput="S.touched=true">${esc(r.note)}</textarea><button class="p" id="sv" onclick="run(save)"${S.fresh?'':' disabled'}>${S.fresh?'저장':'불러오는 중…'}</button>`}
 function mark(id,t){S.touched=true;S.r.prayer=$('#pr').value;S.r.note=$('#nt').value;if(S.st[id]!=t)delete S.rs[id];S.st[id]=t;draw()}
 async function save(){const un=S.r.students.filter(s=>!S.st[s.id]).length;
@@ -685,7 +687,7 @@ async function vStat(){
   const f=()=>run(async()=>{const q={month:$('#m').value,bu:buVal(),cls:$('#c').value};await swr('stats','stats|'+JSON.stringify(q),bg=>call('stats',q,bg),a=>{
     const rr=a.filter(o=>o.rate!=null),av=rr.length?Math.round(rr.reduce((x,o)=>x+o.rate,0)/rr.length):null,lw=rr.filter(o=>o.rate<50).length;
     $('#l').innerHTML=(a.length?`<p class="ssum">학생 <b>${a.length}</b>명 · 평균 출석률 <b>${av==null?'-':av+'%'}</b>${lw?` · <span class="rlow">50% 미만 ${lw}명</span>`:''}</p><table><tr><th>이름</th><th>반</th><th>출석</th><th>결석</th><th>출석률</th></tr>`+
-    a.map(o=>`<tr class="go" onclick="run(()=>vStu('${o.id}'))"><td>${esc(o.name)}</td><td>${esc(o.cls)}</td><td>${o['출석']}</td><td>${o['결석']}</td><td${o.rate!=null&&o.rate<50?' class="rlow"':''}>${o.rate==null?'-':o.rate+'%<div class="meter"><i style="width:'+o.rate+'%"></i></div>'}</td></tr>`).join('')+`</table><p><small>이름을 누르면 학생 개인별 출석 기록을 볼 수 있어요.</small></p>`:emp('학생이 없습니다.','👥'))})});
+    a.map(o=>`<tr class="go" onclick="run(()=>vStu('${escj(o.id)}'))"><td>${esc(o.name)}</td><td>${esc(o.cls)}</td><td>${o['출석']}</td><td>${o['결석']}</td><td${o.rate!=null&&o.rate<50?' class="rlow"':''}>${o.rate==null?'-':o.rate+'%<div class="meter"><i style="width:'+o.rate+'%"></i></div>'}</td></tr>`).join('')+`</table><p><small>이름을 누르면 학생 개인별 출석 기록을 볼 수 있어요.</small></p>`:emp('학생이 없습니다.','👥'))})});
   if(multi())$('#bu').onchange=()=>{fill();f()};
   $('#m').onchange=$('#c').onchange=f;f()}
 async function vStu(id){
@@ -723,7 +725,7 @@ async function vCare(){$('#v').innerHTML=`<div class="card"><b>심방일지</b><
       $('#vs').innerHTML=`<option value="">${U.admin?'전체 (최신순)':'전체 학생 (최신순)'}</option>`+(U.admin?(P.length?`<optgroup label="학생">${P.map(so).join('')}</optgroup>`:'')+(Q.length?`<optgroup label="교사">${Q.map(x=>`<option value="T:${esc(x)}">${esc(x)} 선생님</option>`).join('')}</optgroup>`:''):P.map(so).join(''));$('#vs').value=cur};
     fl();$('#vq').oninput=fl;$('#vs').onchange=()=>{S.vf=$('#vs').value;carePaint()};carePaint()})}
 function carePaint(){const id=S.vf||'',lg=S.lg;let n=0;
-  const h=lg.map((o,i)=>String(o.id)===id||!id?(n++,`<div class="row"><div><b class="pn" onclick="S.vf='${esc(o.id)}';$('#vs').value=S.vf;carePaint()">${esc(o.name)}${o.tch?' 선생님':''}</b>${o.tch?' <small class="gr" style="background:#7c3aed;color:#fff">교사심방</small>':''} <small>${o.tch?'':esc(o.cls)+' · '}${lbl(o.date)}${o.by?' · '+esc(o.by):''}</small><br>${br(o.note)}${canEd(o)?`<br><button class="vb" onclick="careEd(${i})">수정</button><button class="vb dl" onclick="careDl(${i})">삭제</button>`:''}</div></div>`):'').join('');
+  const h=lg.map((o,i)=>String(o.id)===id||!id?(n++,`<div class="row"><div><b class="pn" onclick="S.vf='${escj(o.id)}';$('#vs').value=S.vf;carePaint()">${esc(o.name)}${o.tch?' 선생님':''}</b>${o.tch?' <small class="gr" style="background:#7c3aed;color:#fff">교사심방</small>':''} <small>${o.tch?'':esc(o.cls)+' · '}${lbl(o.date)}${o.by?' · '+esc(o.by):''}</small><br>${br(o.note)}${canEd(o)?`<br><button class="vb" onclick="careEd(${i})">수정</button><button class="vb dl" onclick="careDl(${i})">삭제</button>`:''}</div></div>`):'').join('');
   $('#l').innerHTML=n?h:emp(id?(/^T:/.test(id)?'이 선생님의 심방일지가 아직 없습니다.':'이 학생의 심방일지가 아직 없습니다.'):'아직 심방일지가 없습니다.','💌')}
 const canEd=o=>U.admin||(o.by&&o.by===U.name);
 async function careEd(i){const o=S.lg[i],n=prompt('심방 내용을 수정해 주세요',o.note);if(n==null||!n.trim())return;
@@ -737,7 +739,7 @@ async function vPpl(){
   const f=()=>{const q=$('#q').value.trim(),b=$('#b').checked,sc=$('#sc').value;
     $('#l').innerHTML=a.filter(o=>(!q||String(o.name).includes(q)||String(o.school).includes(q))&&(!sc||(sc=='__none'?!o.school:o.school==sc))&&(!b||String(o.birth).slice(5,7)==mo))
     .sort((x,y)=>b?String(x.birth).slice(8)-String(y.birth).slice(8):0)
-    .map(o=>`<div class="row"><div style="flex:1;min-width:0"><span class="sg sgr ${sgC(o.faith)}">${esc(o.faith||'신급 없음')}</span><b>${esc(o.name)}</b>${o.birth&&String(o.birth).slice(5,7)==mo?'<span class="bd8">🎂 이번 달</span>':''} <small>${esc(o.cls)}${o.grade&&!String(o.cls).includes(String(o.grade).replace(/학년$/,''))?' '+esc(o.grade):''}</small><br><small>${o.school?esc(o.school)+' · ':''}${o.birth?'생일 '+(+String(o.birth).slice(5,7))+'월 '+(+String(o.birth).slice(8,10))+'일 ':''}${esc(o.note)}</small><br>${tel(o.tel,'본인')}${tel(o.ptel,'부모')}${U.admin?`<div class="sgsel">신급 <select onchange="faithSet('${esc(o.id)}',this)">${FA.map(x=>`<option value="${x}"${(o.faith||'')==x?' selected':''}>${x||'없음'}</option>`).join('')}</select></div>`:''}</div></div>`).join('')||emp('해당하는 학생이 없습니다.','🔍')};
+    .map(o=>`<div class="row"><div style="flex:1;min-width:0"><span class="sg sgr ${sgC(o.faith)}">${esc(o.faith||'신급 없음')}</span><b>${esc(o.name)}</b>${o.birth&&String(o.birth).slice(5,7)==mo?'<span class="bd8">🎂 이번 달</span>':''} <small>${esc(o.cls)}${o.grade&&!String(o.cls).includes(String(o.grade).replace(/학년$/,''))?' '+esc(o.grade):''}</small><br><small>${o.school?esc(o.school)+' · ':''}${o.birth?'생일 '+(+String(o.birth).slice(5,7))+'월 '+(+String(o.birth).slice(8,10))+'일 ':''}${esc(o.note)}</small><br>${tel(o.tel,'본인')}${tel(o.ptel,'부모')}${U.admin?`<div class="sgsel">신급 <select onchange="faithSet('${escj(o.id)}',this)">${FA.map(x=>`<option value="${x}"${(o.faith||'')==x?' selected':''}>${x||'없음'}</option>`).join('')}</select></div>`:''}</div></div>`).join('')||emp('해당하는 학생이 없습니다.','🔍')};
   S.pplf=f;S.ppla=()=>a;
   const load=()=>run(async()=>{const bu=buVal();await swr('people','people|'+bu,bg=>call('people',{bu},bg),d=>{a=d;
     const cur=$('#sc').value,ss=[...new Set(a.map(o=>String(o.school||'').trim()).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko'));
