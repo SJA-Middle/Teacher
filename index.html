@@ -196,8 +196,9 @@ function vAdm(){VG++;if(S.adm=='심방기록')S.adm='';const m=S.adm||'보고서
   ({보고서미제출:aMiss,장기결석:aLong,보고서요약:aSum,전체출석율:aTrend,교사명단:aTch}[m])()}
 // 관리자: 선생님 목록 보기 / PIN 초기화
 async function aTch(){const a=$('#a');a.innerHTML='불러오는 중…';
+  const tb=`<div class="row" style="background:${TRUST?'#e8f7ee':'#f1f5f9'}"><div><b>🔐 이 기기 로그인 유지</b> <small>${TRUST?'<b style="color:#15803d">켜짐 · 30일 유지</b>':'꺼짐 · 창을 닫거나 5분간 사용하지 않으면 로그아웃'}</small><br><small>내 맥미니처럼 나만 쓰는 기기에서만 켜세요. 다른 모든 기기는 자동으로 꺼져 있어요.</small></div><button class="vb" onclick="trustSet(${!TRUST})">${TRUST?'끄기':'켜기'}</button></div>`;
   try{await swr('tchList','tchList',bg=>call('tchList',{},bg),r=>{S.tl=r;
-    a.innerHTML=r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.locked?'<b style="color:#d9473f">🔒 잠김 · PIN 초기화로 해제</b>':o.init?'PIN 재설정 필요':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
+    a.innerHTML=tb+r.map((o,i)=>`<div class="row"><div><b>${esc(o.name)}</b>${o.admin?' <small>관리자</small>':''}<br><small>${esc(o.cls)||'담당반 미등록'} · ${o.locked?'<b style="color:#d9473f">🔒 잠김 · PIN 초기화로 해제</b>':o.init?'PIN 재설정 필요':'PIN 설정됨'}</small></div><button class="vb" onclick="pinRs(${i})">PIN 초기화</button></div>`).join('')||'<p>등록된 선생님이 없습니다.</p>'})}
   catch(e){a.innerHTML='<p>'+esc(e.message)+'</p>'}}
 function pinRs(i){const o=S.tl[i];if(!confirm(o.name+' 선생님의 PIN을 000000으로 초기화할까요?\n잠금이 풀리고, 다음 로그인 때 새 PIN(6자리)을 정하게 됩니다.'))return;
   run(async()=>{await call('pinReset',{name:o.name});toast('초기화되었습니다');aTch()})}
@@ -255,6 +256,23 @@ async function visitSave(){const id=$('#vs').value;if(!id)throw new Error(U.admi
 async function visit(id){const n=prompt('심방 내용을 입력해 주세요');if(n==null||!n.trim())return;
   run(async()=>{await call('careAdd',{id,date:nowIso(),note:n});toast('심방 기록이 저장되었습니다');vCare()})}
 let U,P,tab='출석',D=sun(nowIso()),S={};
+// ===== 기기별 로그인 유지 =====
+// 관리자가 '이 기기 로그인 유지'로 지정한 기기(맥미니)만 로그인을 30일 유지(localStorage).
+// 그 밖의 모든 기기는 창·앱을 닫으면 로그아웃되고(sessionStorage), 5분 동안 아무 조작이 없어도 자동으로 로그아웃.
+// (PC방 등 남의 기기에서 로그인해도 기록이 남지 않게 하기 위함)
+const TRUST=(()=>{try{return localStorage.getItem('trust')==='1'}catch(e){return false}})(),IDLE=5*60*1000;
+const ST=(()=>{try{return TRUST?localStorage:sessionStorage}catch(e){return localStorage}})();
+const AK=k=>k=='au'||k=='uc'||k.indexOf('ld|')==0||k.indexOf('rc|')==0;
+if(!TRUST)try{Object.keys(localStorage).filter(AK).forEach(k=>localStorage.removeItem(k))}catch(e){}   // 예전에 이 기기에 남아 있던 로그인·자료는 지움
+function seen(){try{sessionStorage.setItem('la',Date.now())}catch(e){}}
+function idleOver(){if(TRUST)return false;try{const t=+sessionStorage.getItem('la');return !!t&&Date.now()-t>IDLE}catch(e){return false}}
+if(!TRUST){let w=0;['pointerdown','keydown','input','scroll','touchstart'].forEach(ev=>addEventListener(ev,()=>{const n=Date.now();if(n-w>5000){w=n;seen()}},{passive:true,capture:true}));
+  const chk=()=>{if(P&&idleOver()){logout(1)}};setInterval(chk,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})}
+// 관리자 전용: 이 기기를 로그인 유지 기기로 지정/해제
+function trustSet(on){if(on&&!confirm('이 기기에서 로그인을 30일 동안 유지할까요?\n\n내 맥미니처럼 나만 쓰는 기기에서만 켜 주세요.\nPC방·남의 기기에서는 절대 켜지 마세요.'))return;
+  try{const src=on?sessionStorage:localStorage,dst=on?localStorage:sessionStorage;Object.keys(src).filter(AK).forEach(k=>{dst.setItem(k,src.getItem(k));src.removeItem(k)});
+    if(on)localStorage.setItem('trust','1');else{localStorage.removeItem('trust');seen()}}catch(e){}
+  location.reload()}
 let pending=0;
 function busy(d){pending+=d;$('#busy').className=pending>0?'on':''}
 const PC={};   // 명단(people)은 자주 안 바뀌므로 2분간 다시 부르지 않음
@@ -279,9 +297,9 @@ async function call(a,p,bg){
 // 목록 화면은 기기에 저장해 둔 지난번 내용을 곧바로 그리고, 서버의 최신 내용이 도착하면 달라진 경우에만 다시 그림.
 // 무언가를 저장·삭제하면 저장해 둔 내용은 모두 지워서 옛 내용이 보이지 않게 함. 로그아웃하면 기기에서도 지움.
 const RC={},SW={},WR=/^(save|faithSet|nf(Save|AttSave|Del|Done|Undo|Assign)|care(Add|Del|Edit)|rep(Edit|Del)|pinReset)$/;
-function rcGet(k){if(RC[k])return RC[k];try{const v=JSON.parse(localStorage.getItem('rc|'+k));if(v&&Date.now()-v.t<864e5)return RC[k]=v}catch(e){}return null}
-function rcPut(k,d){const v={t:Date.now(),d};RC[k]=v;try{localStorage.setItem('rc|'+k,JSON.stringify(v))}catch(e){}}
-function rcClear(){for(const k in RC)delete RC[k];try{Object.keys(localStorage).filter(k=>k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+function rcGet(k){if(RC[k])return RC[k];try{const v=JSON.parse(ST.getItem('rc|'+k));if(v&&Date.now()-v.t<864e5)return RC[k]=v}catch(e){}return null}
+function rcPut(k,d){const v={t:Date.now(),d};RC[k]=v;try{ST.setItem('rc|'+k,JSON.stringify(v))}catch(e){}}
+function rcClear(){for(const k in RC)delete RC[k];try{Object.keys(ST).filter(k=>k.indexOf('rc|')==0).forEach(k=>ST.removeItem(k))}catch(e){}}
 async function swr(site,k,get,draw){const g=VG,my=SW[site]=(SW[site]||0)+1,c=rcGet(k);
   if(c)draw(c.d,1);
   let d;try{d=await get(!!c)}catch(e){if(c)return;throw e}   // 지난 내용을 보여주고 있으면 통신 오류는 조용히 넘어감
@@ -291,7 +309,7 @@ async function swr(site,k,get,draw){const g=VG,my=SW[site]=(SW[site]||0)+1,c=rcG
 async function run(f){try{await f()}catch(e){if(e&&e.stale)return;console.error(e);
   alert(e instanceof TypeError||e instanceof ReferenceError||e instanceof RangeError||e instanceof SyntaxError?'화면을 불러오는 중 문제가 생겼어요. 다시 한 번 눌러 주세요.':(e&&e.message)||e)}}
 // 로그인에 성공하면 기기에는 PIN 대신 서버가 준 열쇠(토큰)만 저장
-function keep(){const tk=U.tk;delete U.tk;if(tk)P={n:P.n,tk};try{localStorage.setItem('au',JSON.stringify(P));localStorage.setItem('uc',JSON.stringify(U))}catch(e){}}
+function keep(){const tk=U.tk;delete U.tk;if(tk)P={n:P.n,tk};try{ST.setItem('au',JSON.stringify(P));ST.setItem('uc',JSON.stringify(U))}catch(e){}seen()}
 async function login(){P={n:$('#n').value.trim(),p:$('#p').value};
   try{U=await call('login');if(U.must){showSetPin();return}keep()}catch(e){$('#err').textContent=e.message;return}
   $('#p').value='';enter()}
@@ -314,8 +332,8 @@ function enter(){D=sun(nowIso());$('#err').textContent='';$('#login').hidden=tru
   if(U.admin)call('alerts',{},1).then(a=>{if(!a||!a.length)return;abSet('ab1','<b>🐑 장기결석 알림</b><br>'+a.map(x=>esc(x.label)+' · '+esc(x.name)+' <small>'+esc(x.cls)+'</small>').join('<br>')+'<br><button onclick="ackAl()">확인했어요</button>')}).catch(()=>{});
   if(U.classes.length)call('notices',{},1).then(a=>{if(!a||!a.length)return;abSet('ab2','<b>🌱 우리 반에 새친구가 왔어요!</b><br>'+a.map(x=>esc(x.name)+' <small>'+esc(x.cls)+(x.school?' · '+esc(x.school):'')+(x.grade?' '+esc(x.grade):'')+'</small>').join('<br>')+'<br><small>새친구 교육을 마치고 반에 배정되었어요. 따뜻하게 맞아 주세요 🙏</small><br><button onclick="ackNf()">확인했어요</button>')}).catch(()=>{})}
 async function ackAl(){try{await call('alertAck',{},1);abSet('ab1','')}catch(e){toast('처리하지 못했습니다')}}
-function logout(){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
-  try{Object.keys(localStorage).filter(k=>k=='au'||k=='uc'||k.indexOf('ld|')==0||k.indexOf('rc|')==0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}
+function logout(idle){try{if(P&&P.tk)fetch(API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({n:P.n,tk:P.tk,a:'logout'})}).catch(()=>{})}catch(e){}
+  try{[localStorage,sessionStorage].forEach(st=>Object.keys(st).filter(AK).forEach(k=>st.removeItem(k)));sessionStorage.removeItem('la');if(idle)sessionStorage.setItem('idleOut','1')}catch(e){}location.reload()}
 function go(t){tab=t;VG++;[...$('#tabs').children].forEach(b=>b.className=b.dataset.t==t?'on':'');run({홈:vHome,출석:vAtt,출석통계:vStat,보고서:vRep,심방일지:vCare,연락처:vPpl,새친구:vNf,관리:vAdm}[t])}
 // ===== 관리자 홈: 주일 전체 상황 한눈에 =====
 // 재적·교사, 출석/결석과 지난주 대비, 새친구 현황, 보고서의 기도제목·특이사항
@@ -630,11 +648,11 @@ async function vAtt(){
   $('#pw').onclick=()=>{const e=$('#d');if(e.selectedIndex<e.options.length-1){e.selectedIndex++;run(loadAtt)}};
   $('#nw').onclick=()=>{const e=$('#d');if(e.selectedIndex>0){e.selectedIndex--;run(loadAtt)}};
   await loadAtt()}
-async function loadAtt(){S.cls=$('#c').value;D=$('#d').value;{const e=$('#d');$('#pw').disabled=e.selectedIndex>=e.options.length-1;$('#nw').disabled=e.selectedIndex<=0}const key='ld|'+D+'|'+S.cls,my=S.seq=(S.seq||0)+1;let c=null;try{c=JSON.parse(localStorage.getItem(key))}catch(e){}
+async function loadAtt(){S.cls=$('#c').value;D=$('#d').value;{const e=$('#d');$('#pw').disabled=e.selectedIndex>=e.options.length-1;$('#nw').disabled=e.selectedIndex<=0}const key='ld|'+D+'|'+S.cls,my=S.seq=(S.seq||0)+1;let c=null;try{c=JSON.parse(ST.getItem(key))}catch(e){}
   S.touched=false;S.fresh=!c;
   if(c){S.r=c;S.st=Object.assign({},c.status);S.rs=Object.assign({},c.reasons);draw()}   // 지난번 내용을 먼저 보여주고
   const r=await call('load',{date:D,cls:S.cls});if(my!==S.seq)return;                    // 최신 내용으로 바꿔치기
-  try{localStorage.setItem(key,JSON.stringify(r))}catch(e){}
+  try{ST.setItem(key,JSON.stringify(r))}catch(e){}
   const keep=S.touched?{st:S.st,rs:S.rs,pr:$('#pr').value,nt:$('#nt').value}:null;
   S.r=r;S.fresh=true;
   if(keep){S.st=keep.st;S.rs=keep.rs;r.prayer=keep.pr;r.note=keep.nt}else{S.st=Object.assign({},r.status);S.rs=Object.assign({},r.reasons)}
@@ -657,7 +675,7 @@ async function save(){const un=S.r.students.filter(s=>!S.st[s.id]).length;
   const rs={};Object.keys(S.rs).forEach(k=>{if(S.st[k])rs[k]=S.rs[k]});
   try{await call('save',{date:D,cls:S.cls,status:S.st,reasons:rs,prayer:$('#pr').value,note:$('#nt').value})}
   catch(e){b.disabled=false;b.textContent='저장';throw e}
-  toast('저장되었습니다');try{localStorage.removeItem('ld|'+D+'|'+S.cls)}catch(e){}await loadAtt()}
+  toast('저장되었습니다');try{ST.removeItem('ld|'+D+'|'+S.cls)}catch(e){}await loadAtt()}
 
 async function vStat(){
   $('#v').innerHTML=`<div class="flt"><input type="month" id="m" value="${nowIso().slice(0,7)}">${buSel(true)}<select id="c"></select></div><div id="l">불러오는 중…</div>`;
@@ -732,10 +750,11 @@ function faithSet(id,el){const v=el.value;el.disabled=true;
   call('faithSet',{id,v}).then(r=>{const o=(S.ppla?S.ppla():[]).find(x=>String(x.id)==String(id));if(o)o.faith=r.faith;toast('신급을 저장했어요');S.pplf&&S.pplf()})
    .catch(e=>{alert(e.message||e);S.pplf&&S.pplf()}).finally(()=>{el.disabled=false})}
 // 저장해 둔 로그인 정보가 있으면 서버 확인을 기다리지 않고 바로 화면을 띄움 (확인은 뒤에서 진행)
-function fast(s){let c=null;try{c=JSON.parse(localStorage.getItem('uc'))}catch(e){}
+function fast(s){let c=null;try{c=JSON.parse(ST.getItem('uc'))}catch(e){}
   if(!c||!c.classes){if(s.p){$('#p').value=s.p;login()}else if(s.tk){P=s;call('login',{},1).then(u=>{U=u;keep();enter()}).catch(()=>{})}return}
   P=s;U=c;enter();
   call('login',{},1).then(u=>{if(u.must){logout();return}U=u;keep()}).catch(e=>{if(/PIN/.test(e.message))logout()})}   // 예전 방식(PIN 저장)으로 로그인해 있던 기기는 여기서 자동으로 열쇠 방식으로 바뀜
-try{const s=JSON.parse(localStorage.getItem('au'));if(s){$('#n').value=s.n;fast(s)}}catch(e){}
+try{if(sessionStorage.getItem('idleOut')){sessionStorage.removeItem('idleOut');$('#err').textContent='5분 동안 사용하지 않아 안전을 위해 자동 로그아웃되었어요. 다시 로그인해 주세요.'}}catch(e){}
+try{if(idleOver())logout(1);else{const s=JSON.parse(ST.getItem('au'));if(s){$('#n').value=s.n;fast(s)}}}catch(e){}
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>
